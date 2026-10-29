@@ -170,5 +170,92 @@ class PipelineTest(unittest.TestCase):
         self.assertFalse((out / "2025_net_blotch_20250910_unlinked.csv").exists())
 
 
+class MapRatingsTest(unittest.TestCase):
+    """Orchard-style map: every cell is a tree, one sheet per date, status from value and fill."""
+
+    YELLOW, BLACK, GREEN = "FFFFFF00", "FF000000", "FF00FF00"
+
+    def setUp(self):
+        from openpyxl.styles import PatternFill
+
+        self.tmp = tempfile.TemporaryDirectory()
+        self.workbook = Path(self.tmp.name) / "orchard.xlsx"
+
+        def paint(ws, coordinate, color):
+            ws[coordinate].fill = PatternFill("solid", fgColor=color)
+
+        wb = Workbook()
+        for i, name in enumerate(["May 2019", "May 2020"]):
+            ws = wb.active if i == 0 else wb.create_sheet()
+            ws.title = name
+            for row in range(1, 3):
+                for column in "ABC":
+                    paint(ws, f"{column}{row}", self.GREEN)
+            ws["A1"] = "A1"        # plot label written in a tree cell
+            if i == 1:
+                ws["B1"] = 1       # new case
+                paint(ws, "B1", self.YELLOW)
+                paint(ws, "C1", self.BLACK)   # earlier case, no value
+                ws["A2"] = "R2"
+                ws["B2"] = "Gomose"
+                ws["C2"] = "???"
+        wb.save(self.workbook)
+
+        self.layout = {
+            "workbook": self.workbook,
+            "sheet": "May 2019",
+            "region": "A1:C2",
+            "unit_rules": {"value_types": None, "include_empty": True, "unit_id": "coordinate"},
+            "blocks": [{"block_id": "A1", "regions": ["A1:C2"], "attributes": {"treatment": "A"}}],
+        }
+        self.source = {
+            "kind": "map",
+            "layout_id": "orchard",
+            "disease": "hlb",
+            "workbook": self.workbook,
+            "ignore_text": r"[A-F][1-6]",
+            "status_rules": [
+                {"text": r"gomo", "status": "gummosis"},
+                {"text": r"^r\s*\d*$", "status": "hlb"},
+                {"text": r"^1$", "status": "hlb"},
+                {"empty": True, "fills": [self.BLACK, self.YELLOW], "status": "hlb"},
+            ],
+            "flags": {"new_case": [self.YELLOW]},
+            "assessments": {
+                "2019-05": {"sheet": "May 2019", "date": "2019-05-01"},
+                "2020-05": {"sheet": "May 2020", "date": "2020-05-01"},
+            },
+        }
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_every_tree_is_a_plot_with_block_attributes(self):
+        design = fde.build_design("orchard", self.layout)
+
+        self.assertEqual(len(design), 6)
+        self.assertEqual(design.loc[0, "plot_key"], "A1:A1:1:1")
+        self.assertEqual(design["treatment"].unique().tolist(), ["A"])
+
+    def test_status_per_tree_and_date(self):
+        design = fde.build_design("orchard", self.layout)
+        with contextlib.redirect_stdout(io.StringIO()) as out:
+            ratings = fde.read_map_ratings(self.source, design)
+            fde.report_map_ratings("orchard_hlb", ratings, self.source)
+
+        first = ratings[ratings["date"] == "2019-05-01"]
+        second = ratings[ratings["date"] == "2020-05-01"].set_index("plot_number")
+
+        self.assertEqual(len(ratings), 12)
+        self.assertEqual(first["status"].unique().tolist(), ["healthy"])
+        self.assertEqual(
+            second["status"].to_dict(),
+            {"A1": "healthy", "B1": "hlb", "C1": "hlb", "A2": "hlb", "B2": "gummosis", "C2": "unknown"},
+        )
+        self.assertEqual(second["new_case"].sum(), 1)
+        self.assertTrue(second.loc["B1", "new_case"])
+        self.assertIn("not covered by status_rules", out.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()

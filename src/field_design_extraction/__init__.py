@@ -3,6 +3,7 @@
 from .diagnostics import color_summary, plot_cells
 from .export import write_design, write_ratings
 from .layout import DEFAULT_UNIT_RULES, build_design, report_design
+from .maps import classify_cell, read_map_ratings, report_map_ratings
 from .pipeline import build_designs, build_ratings, export, run
 from .ratings import link_ratings, read_ratings, report_ratings
 from .workbook import read_cells
@@ -14,13 +15,16 @@ __all__ = [
     "build_design",
     "build_designs",
     "build_ratings",
+    "classify_cell",
     "color_summary",
     "export",
     "link_ratings",
     "plot_cells",
     "read_cells",
+    "read_map_ratings",
     "read_ratings",
     "report_design",
+    "report_map_ratings",
     "report_ratings",
     "run",
     "write_design",

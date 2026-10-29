@@ -64,6 +64,23 @@ saved.
 Rows without a plot number (e.g. MIN/MAX rows) are dropped. Ratings that cannot be linked go to
 `<source>_<date>_unlinked.csv` with the reason (`link_status`).
 
+### Ratings marked on the map (`"kind": "map"`)
+
+For maps where each date is a copy of the field map and the rating is written into the plot cell (e.g. an
+orchard where every cell is a tree). The design then takes every cell as a plot: `unit_rules`
+`{"value_types": None, "include_empty": True, "unit_id": "coordinate"}` (plot_number = cell, e.g. `E18`); block
+`attributes` (e.g. `{"treatment": "A"}`) become design columns.
+
+| key | meaning |
+|---|---|
+| `assessments` | `{name: {sheet, date}}`, one sheet per date |
+| `status_rules` | ordered list; the first rule whose conditions all hold gives the status. Conditions: `text` (regular expression, case-insensitive), `fills` (list of fill colors as `read_cells` shows them), `empty` (True/False) |
+| `default_status` | status of empty cells no rule covers (default `healthy`); non-empty cells no rule covers get `unknown` and are listed |
+| `ignore_text` | text read as empty (e.g. plot labels written in tree cells) |
+| `flags` | extra True/False columns from the fill, e.g. `{"new_case": ["FFFFFF00"]}` |
+
+Output: one file per date with every plot: `status`, the flags, and the raw cell `value` and `fill`.
+
 ### Checking the block ranges
 
 `fde.read_cells(workbook, sheet, region)` returns every cell with value, merged range and fill color;

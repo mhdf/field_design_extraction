@@ -2,7 +2,16 @@
 
 from .export import write_design, write_ratings
 from .layout import build_design, report_design
+from .maps import map_value_columns, read_map_ratings, report_map_ratings
 from .ratings import link_ratings, read_ratings, report_ratings
+
+
+def value_columns(source):
+    """Columns written after RATING_COLUMNS for a ratings source."""
+    if source.get("kind") == "map":
+        return map_value_columns(source)
+
+    return list(source.get("value_columns", {}).values())
 
 
 def build_designs(layouts, verbose=True):
@@ -33,11 +42,19 @@ def build_ratings(sources, designs, verbose=True):
                 f"which is not in the layouts: {list(designs)}"
             )
 
-        ratings = read_ratings(source)
-        linked = link_ratings(ratings, designs[layout_id])
+        # --- "map": ratings marked on the field map; otherwise a ratings table
+        if source.get("kind") == "map":
+            linked = read_map_ratings(source, designs[layout_id])
 
-        if verbose:
-            report_ratings(source_id, linked, designs[layout_id])
+            if verbose:
+                report_map_ratings(source_id, linked, source)
+
+        else:
+            ratings = read_ratings(source)
+            linked = link_ratings(ratings, designs[layout_id])
+
+            if verbose:
+                report_ratings(source_id, linked, designs[layout_id])
 
         results[source_id] = linked
 
@@ -54,8 +71,7 @@ def export(layouts, sources, designs, ratings):
     for source_id, linked in ratings.items():
         source = sources[source_id]
         folder = layouts[source["layout_id"]]["output_folder"]
-        value_columns = source.get("value_columns", {}).values()
-        paths.extend(write_ratings(linked, folder, source_id, value_columns))
+        paths.extend(write_ratings(linked, folder, source_id, value_columns(source)))
 
     print()
     print("EXPORTED")

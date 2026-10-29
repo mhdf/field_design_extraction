@@ -15,6 +15,10 @@ DEFAULT_UNIT_RULES = {
     "merged": None,
     # True: only the top-left cell of a merged range; None: any
     "anchor": None,
+    # True: empty cells are plots too (e.g. every tree of an orchard map)
+    "include_empty": False,
+    # plot_number from the cell "value", or the cell "coordinate" (e.g. 'E18')
+    "unit_id": "value",
 }
 
 DESIGN_COLUMNS = [
@@ -51,10 +55,14 @@ def make_plot_key(block_id, plot_number, row, column):
 
 def _unit_mask(cells, rules):
     """Cells that satisfy the plot-cell rules."""
-    mask = cells["value"].notna()
+    if rules.get("include_empty"):
+        mask = pd.Series(True, index=cells.index)
+    else:
+        mask = cells["value"].notna()
 
     if rules.get("value_types") is not None:
-        mask &= cells["value_type"].isin(rules["value_types"])
+        allowed = list(rules["value_types"]) + (["empty"] if rules.get("include_empty") else [])
+        mask &= cells["value_type"].isin(allowed)
 
     if rules.get("merged") is True:
         mask &= cells["is_merged"]
@@ -103,12 +111,15 @@ def build_design(layout_id, layout, cells=None):
 
         units = cells.loc[
             positions.isin(inside) & _unit_mask(cells, rules),
-            ["row", "column", "value"],
+            ["row", "column", "value", "coordinate"],
         ].copy()
 
         if units.empty:
             print(f"WARNING: {layout_id} / {block_id}: no plot cells found")
             continue
+
+        if rules.get("unit_id") == "coordinate":
+            units["value"] = units["coordinate"]
 
         units["block_id"] = block_id
         units["block_label"] = block.get("label", block_id)
