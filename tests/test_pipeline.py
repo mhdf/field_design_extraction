@@ -313,7 +313,8 @@ class MapRatingsTest(unittest.TestCase):
 
         self.assertEqual(label, "others (no tree, dead)")
         self.assertEqual(values.tolist()[:4], ["healthy", "hlb", label, label])
-        self.assertIsNone(values.iloc[4])
+        # --- a missing value stays missing (None with pandas 2, NaN with pandas 3)
+        self.assertTrue(pd.isna(values.iloc[4]))
 
     def test_many_numeric_values_become_classes(self):
         from field_design_extraction.figures import score_classes
