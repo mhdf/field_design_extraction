@@ -89,10 +89,11 @@ def score_classes(values, bins=None, max_classes=12):
     return classes.where(numbers.notna()), labels
 
 
-def group_other_values(values, keep, label="others", order=None):
+def group_other_values(values, keep, label="others", order=None, description=None):
     """Values not in `keep` become one class, e.g. 'others (gummosis, dead, missing)'.
 
-    order: order in which the grouped values are listed (default: as they occur).
+    order:       order in which the grouped values are listed (default: as they occur).
+    description: text between the brackets instead of the list of grouped values.
     Returns (values, label of the grouped class or None when nothing was grouped).
     """
     values = pd.Series(values)
@@ -103,7 +104,10 @@ def group_other_values(values, keep, label="others", order=None):
     if not others:
         return values, None
 
-    full_label = f"{label} ({', '.join(str(v).replace('_', ' ') for v in others)})"
+    if description is None:
+        description = ", ".join(str(v).replace("_", " ") for v in others)
+
+    full_label = f"{label} ({description})"
 
     return values.where(values.isin(keep) | values.isna(), full_label), full_label
 

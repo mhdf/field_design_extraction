@@ -105,7 +105,8 @@ values (e.g. % severity) are grouped into classes (`bins`, default 10 units); ha
 
 `group_others` (ratings source), e.g. `{"keep": ["healthy", "hlb"], "label": "others", "color": "#8C8C8C"}`:
 in the figures, every other class becomes one class whose name lists what it contains, e.g.
-`others (gummosis, dead, missing)`; the CSV files keep the detailed values.
+`others (gummosis, dead, missing)`, or your own text with `"description": "dead, other diseases, etc."`;
+the CSV files keep the detailed values.
 
 Proportions: `plot_size` = (width, height) of each plot on the schematic, in any unit (only the ratio matters).
 Make plots wider than tall when rows are farther apart than plots within a row, e.g. the real spacing

@@ -165,6 +165,7 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
             rated[value], others_label = group_other_values(
                 rated[value], group["keep"], group.get("label", "others"),
                 order=list(style.get("colors", {})),
+                description=group.get("description"),
             )
             if others_label:
                 colors = {k: c for k, c in style.get("colors", {}).items() if k in group["keep"]}
