@@ -1,0 +1,31 @@
+# Runs the tests on GitHub (Linux) for every push to main and every pull request.
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      # --- run every Python version even when one fails
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the package with matplotlib
+        run: pip install -e ".[plots]"
+
+      - name: Run the tests
+        env:
+          MPLBACKEND: Agg
+        run: python -m unittest discover -s tests -t tests
