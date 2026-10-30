@@ -92,13 +92,18 @@ fde.save_figures(layouts, rating_sources, designs, ratings, which=["design", "di
 | `design` | `<layout_id>.png` | schematic of the plots, colored by block (or any design column, e.g. treatment) |
 | `distribution` | `<source>_distribution.png` | share of plots per score class or status, one bar per date |
 | `maps` | `<source>_<date>_map.png` | the schematic colored by the rating of that date (grey: not rated) |
+| `coverage` | `<source>_<date>_coverage.png` | ratings tables: which plots were assessed on that date |
 | `incidence` | `<source>_incidence.png` | map ratings: share of plots with a status per date, one line per group (e.g. treatment) |
 
 Files go to `<output_folder>/figures` (or the layout's `figure_folder`). Options: a `"figure"` entry in a layout
-(`title`, `color_by`, `colors`, `names`, `legend_title`, `plot_size`, `rotate`, `show_labels`, `block_outlines`,
-`hatch_shared_with` + `hatch_label`) and in a ratings source (`value`, `title`, `colors`, `legend_title`,
-`xlabel`, `map_title`, `bins`, `incidence`). Scores with many values (e.g. % severity) are grouped into classes
-(`bins`, default 10 units); half scores (1.5, 2.5…) are hatched.
+(`title`, `color_by`, `colors`, `names`, `legend_title`, `plot_size`, `rotate`, `show_labels`, `label_rotation`,
+`gaps`, `gap_rule`, `block_outlines`, `hatch_shared_with` + `hatch_label`) and in a ratings source (`value`,
+`title`, `colors`, `legend_title`, `xlabel`, `map_title`, `coverage_title`, `bins`, `incidence`). Scores with many
+values (e.g. % severity) are grouped into classes (`bins`, default 10 units); half scores (1.5, 2.5…) are hatched.
+
+Gaps between blocks: `gaps` = (horizontal, vertical) size; `gap_rule` `"any"` (default) puts a gap wherever
+blocks meet (at least 2 neighbouring plots), but the gap crosses the whole figure and may cut other blocks;
+`"disjoint"` only separates rows/columns that share no block. `label_rotation`: 0 (horizontal) or 90 (vertical).
 
 ### Checking the block ranges
 

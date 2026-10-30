@@ -169,6 +169,23 @@ class PipelineTest(unittest.TestCase):
 
         self.assertFalse((out / "2025_net_blotch_20250910_unlinked.csv").exists())
 
+    def test_coverage_figure_for_ratings_table(self):
+        import matplotlib
+        matplotlib.use("Agg")
+
+        layouts = {"2025_design": {**self.layout, "figure": {"label_rotation": 0, "gap_rule": "disjoint"}}}
+        sources = {"2025_net_blotch": self.per_sheet}
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            designs = fde.build_designs(layouts)
+            ratings = fde.build_ratings(sources, designs)
+            fde.save_figures(layouts, sources, designs, ratings, which=["coverage"])
+
+        self.assertEqual(
+            [p.name for p in (self.folder / "consolidated" / "figures").iterdir()],
+            ["2025_net_blotch_20250910_coverage.png"],
+        )
+
 
 class MapRatingsTest(unittest.TestCase):
     """Orchard-style map: every cell is a tree, one sheet per date, status from value and fill."""

@@ -88,11 +88,19 @@ def export(layouts, sources, designs, ratings):
 
 # --- plot_design options that can be set in a layout's "figure" entry
 DESIGN_FIGURE_KEYS = [
-    "color_by", "colors", "names", "order", "label_column", "show_labels",
-    "rotate", "plot_size", "gaps", "block_outlines", "legend_title", "title",
+    "color_by", "colors", "names", "order", "label_column", "show_labels", "label_rotation",
+    "rotate", "plot_size", "gaps", "gap_rule", "gap_min_pairs", "block_outlines", "legend_title", "title",
 ]
 
-FIGURE_TYPES = ("design", "distribution", "maps", "incidence")
+# --- layout options also used by the rating maps and coverage maps
+MAP_LAYOUT_KEYS = [
+    "label_column", "show_labels", "label_rotation", "rotate", "plot_size", "gaps",
+    "gap_rule", "gap_min_pairs", "block_outlines",
+]
+
+FIGURE_TYPES = ("design", "distribution", "maps", "coverage", "incidence")
+
+COVERAGE_COLORS = {"Assessed": "#111111", "Not assessed": "#FFFFFF"}
 
 
 def figure_folder(layout):
@@ -106,6 +114,7 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
     design:       <layout_id>.png, the schematic of each layout
     distribution: <source_id>_distribution.png, classes per date
     maps:         <source_id>_<YYYYMMDD>_map.png, the schematic colored by the rating of each date
+    coverage:     <source_id>_<YYYYMMDD>_coverage.png, ratings tables only: assessed vs not assessed plots
     incidence:    <source_id>_incidence.png, map ratings only: share of plots with a status per date
                   and group (needs "incidence": {"status": ..., "group": ...} in the source's "figure")
 
@@ -173,14 +182,28 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
             )
             paths.append(save_figure(fig, folder / f"{source_id}_incidence.png", show=show))
 
-        if "maps" in which:
-            layout_settings = layout.get("figure", {})
-            options = {
-                k: layout_settings[k]
-                for k in ("label_column", "show_labels", "rotate", "plot_size", "gaps", "block_outlines")
-                if k in layout_settings
-            }
+        layout_settings = layout.get("figure", {})
+        options = {k: layout_settings[k] for k in MAP_LAYOUT_KEYS if k in layout_settings}
 
+        # --- coverage: which plots were assessed on each date (ratings tables only)
+        if "coverage" in which and source.get("kind") != "map":
+            for date, day in rated.groupby("date"):
+                table = design.assign(
+                    coverage=design["plot_key"].isin(day["plot_key"]).map(
+                        {True: "Assessed", False: "Not assessed"}
+                    )
+                )
+                fig = plot_design(
+                    table, color_by="coverage", colors=COVERAGE_COLORS, legend_title="",
+                    title=settings.get("coverage_title", "Assessment coverage — {date}").format(
+                        disease=source["disease"], date=date,
+                    ),
+                    **options,
+                )
+                stem = f"{source_id}_{pd.Timestamp(date):%Y%m%d}_coverage"
+                paths.append(save_figure(fig, folder / f"{stem}.png", show=show))
+
+        if "maps" in which:
             for date, day in rated.groupby("date"):
                 table = design.merge(day[["plot_key", value]], on="plot_key", how="left")
                 fig = plot_design(

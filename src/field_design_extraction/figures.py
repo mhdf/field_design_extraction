@@ -142,12 +142,21 @@ def value_styles(values, colors=None, order=None, scale=False):
 # POSITIONS ON THE SCHEMATIC
 # =============================================
 
-def schematic_positions(df, plot_size=(1.0, 1.8), gaps=(0.25, 0.20), rotate=None):
-    """x, y (top-left corner) of each plot: empty map rows/columns removed, a small gap
-    where neighbouring rows or columns belong to different blocks.
+def schematic_positions(
+    df, plot_size=(1.0, 1.8), gaps=(0.25, 0.20), rotate=None, gap_rule="any", gap_min_pairs=2,
+):
+    """x, y (top-left corner) of each plot: empty map rows/columns removed, gaps between blocks.
 
-    rotate: None, "clockwise" or "counterclockwise" (plot width and height swap).
+    gaps:     (horizontal, vertical) gap size, in plot-width units.
+    gap_rule: "any" — gap between two neighbouring rows (columns) where at least gap_min_pairs
+              plots and their neighbours belong to different blocks (the gap runs across the
+              whole figure, so it may also cut other blocks); "disjoint" — only when the two
+              rows (columns) share no block at all.
+    rotate:   None, "clockwise" or "counterclockwise" (plot width and height swap).
     """
+    if gap_rule not in ("any", "disjoint"):
+        raise ValueError("gap_rule must be 'any' or 'disjoint'")
+
     df = df.copy()
     row, column = df["row"].astype(int), df["column"].astype(int)
     width, height = plot_size
@@ -161,21 +170,36 @@ def schematic_positions(df, plot_size=(1.0, 1.8), gaps=(0.25, 0.20), rotate=None
     elif rotate is not None:
         raise ValueError("rotate must be None, 'clockwise' or 'counterclockwise'")
 
-    def axis_positions(index, size, gap):
+    def axis_positions(index, other, size, gap):
+        """Positions along one axis; `other` is the perpendicular coordinate."""
         values = sorted(index.unique())
-        blocks = df.groupby(index)["block_id"].agg(set)
+        lines = {
+            value: dict(zip(other[index == value], df.loc[index == value, "block_id"]))
+            for value in values
+        }
         positions, current = {}, 0.0
 
         for i, value in enumerate(values):
             positions[value] = current
             current += size
-            if i < len(values) - 1 and blocks[value].isdisjoint(blocks[values[i + 1]]):
+
+            if i == len(values) - 1:
+                continue
+
+            here, there = lines[value], lines[values[i + 1]]
+
+            if gap_rule == "disjoint":
+                split = set(here.values()).isdisjoint(there.values())
+            else:
+                split = sum(here[k] != there[k] for k in here.keys() & there.keys()) >= gap_min_pairs
+
+            if split:
                 current += gap
 
         return index.map(positions)
 
-    df["x"] = axis_positions(column, width, gaps[0])
-    df["y"] = axis_positions(row, height, gaps[1])
+    df["x"] = axis_positions(column, row, width, gaps[0])
+    df["y"] = axis_positions(row, column, height, gaps[1])
     df.attrs["plot_size"] = (width, height)
 
     return df
@@ -198,6 +222,9 @@ def plot_design(
     rotate=None,
     plot_size=(1.0, 1.8),
     gaps=(0.25, 0.20),
+    gap_rule="any",
+    gap_min_pairs=2,
+    label_rotation=None,
     block_outlines=False,
     legend_title=None,
     title=None,
@@ -210,14 +237,17 @@ def plot_design(
     names:       {value: legend text}.
     hatch:       column name or True/False Series: hatched plots (legend text: hatch_label).
     show_labels: plot numbers inside the plots (default: when there are at most 1500 plots).
+    label_rotation: angle of the plot numbers (e.g. 0 or 90); default: 90 in tall plots, else 0.
+    gaps, gap_rule: space between blocks (see schematic_positions).
     bins:        class edges for numbers with many values (see score_classes).
     Plots with no value in `color_by` are drawn light grey ("not rated").
     """
     import matplotlib.pyplot as plt
     from matplotlib.collections import PatchCollection
+    from matplotlib.colors import to_rgb
     from matplotlib.patches import Patch, Rectangle
 
-    df = schematic_positions(df, plot_size, gaps, rotate)
+    df = schematic_positions(df, plot_size, gaps, rotate, gap_rule, gap_min_pairs)
     width, height = df.attrs["plot_size"]
 
     classes, class_order = score_classes(df[color_by], bins)
@@ -281,14 +311,23 @@ def plot_design(
             ))
 
         if show_labels:
-            vertical = height > width
-            for x, y, label in zip(df["x"], df["y"], df[label_column]):
-                if pd.notna(label):
-                    ax.text(
-                        x + width / 2, y + height / 2, str(label),
-                        ha="center", va="center", rotation=90 if vertical else 0,
-                        fontsize=7, zorder=4,
-                    )
+            if label_rotation is None:
+                label_rotation = 90 if height > width else 0
+
+            for x, y, label, value in zip(df["x"], df["y"], df[label_column], df[color_by]):
+                if pd.isna(label):
+                    continue
+
+                # --- white text on dark fills
+                fill = styles.get(value, (NOT_RATED_COLOR,))[0]
+                r, g, b = to_rgb(fill)
+                text_color = "white" if 0.299 * r + 0.587 * g + 0.114 * b < 0.45 else "black"
+
+                ax.text(
+                    x + width / 2, y + height / 2, str(label),
+                    ha="center", va="center", rotation=label_rotation,
+                    fontsize=7, color=text_color, zorder=4,
+                )
 
         if block_outlines:
             for block_id, block in df.groupby("block_id", sort=False):
@@ -325,7 +364,7 @@ def plot_design(
 
         legends = [ax.legend(
             handles=handles,
-            title=legend_title or color_by,
+            title=color_by if legend_title is None else legend_title,
             loc="upper center",
             bbox_to_anchor=(0.5, -0.01),
             ncol=_legend_columns(len(handles)),
