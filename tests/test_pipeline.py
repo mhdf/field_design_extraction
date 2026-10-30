@@ -314,6 +314,10 @@ class MapRatingsTest(unittest.TestCase):
         self.assertEqual(classes.iloc[:5].tolist()[:4], ["10–20", "20–30", "20–30", "60–70"])
         self.assertTrue(pd.isna(classes.iloc[4]))
 
+        # --- the last class includes its upper edge
+        classes, labels = score_classes(pd.Series([0, 55, 100]), bins=list(range(0, 101, 10)))
+        self.assertEqual(classes.tolist(), ["0–10", "50–60", "90–100"])
+
 
 if __name__ == "__main__":
     unittest.main()

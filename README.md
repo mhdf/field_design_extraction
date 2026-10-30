@@ -12,7 +12,7 @@ occurs twice).
 
 ## Install
 
-In the Python environment that runs the project scripts:
+In the Python environment that will run your scripts (Python 3.10 or newer; matplotlib for the figures):
 
 ```
 git clone https://github.com/mhdf/field_design_extraction.git
@@ -35,6 +35,35 @@ fde.export(layouts, rating_sources, designs, ratings)   # CSV files
 
 Each step prints what it found: plots per block, plot numbers repeated within a block, and per date how many
 ratings were linked and why the others were not.
+
+## Examples
+
+Two synthetic examples (made-up plots and scores, 0–100, with spatial patches) in `examples/`:
+
+| example | field map | ratings |
+|---|---|---|
+| `example_1_merged_plots.py` | 4 blocks, 210 plots, each plot number in a 2-cell merged range | one sheet per date (2 dates), a block column, part of the plots rated |
+| `example_2_one_sheet_per_trial.py` | 4 trials side by side, 200 plots numbered from 1 in each trial | one sheet per trial, column names on row 7, MIN/MAX rows below the table |
+
+```
+python examples/create_example_workbooks.py        # writes examples/data/*.xlsx (fixed random seed)
+python examples/example_1_merged_plots.py          # writes examples/output/example_1/
+python examples/example_2_one_sheet_per_trial.py   # writes examples/output/example_2/
+```
+
+Example 1 — design, and the scores of the second date (grey: not rated on that date):
+
+<img src="docs/images/example_1_design.png" width="49%"> <img src="docs/images/example_1_score_20250905_map.png" width="49%">
+
+Example 1 — plots assessed on the first date, and the score classes per date:
+
+<img src="docs/images/example_1_score_20250815_coverage.png" width="49%"> <img src="docs/images/example_1_score_distribution.png" width="49%">
+
+Example 2 — severity of every plot:
+
+<img src="docs/images/example_2_severity_20250910_map.png" width="98%">
+
+## Settings
 
 ### layouts — one entry per field map
 

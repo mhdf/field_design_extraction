@@ -84,7 +84,10 @@ def score_classes(values, bins=None, max_classes=12):
         edges = list(bins)
 
     labels = [f"{a:g}–{b:g}" for a, b in zip(edges[:-1], edges[1:])]
-    classes = pd.cut(numbers, edges, right=False, labels=labels).astype(object)
+
+    # --- classes include their lower edge; the last one also its upper edge (e.g. 100)
+    cut_edges = list(edges[:-1]) + [edges[-1] + 1e-9 * max(1.0, abs(edges[-1]))]
+    classes = pd.cut(numbers, cut_edges, right=False, labels=labels).astype(object)
 
     return classes.where(numbers.notna()), labels
 
