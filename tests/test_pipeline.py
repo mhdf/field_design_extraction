@@ -256,6 +256,35 @@ class MapRatingsTest(unittest.TestCase):
         self.assertTrue(second.loc["B1", "new_case"])
         self.assertIn("not covered by status_rules", out.getvalue())
 
+    def test_figures_are_saved(self):
+        import matplotlib
+        matplotlib.use("Agg")
+
+        layouts = {"orchard": {**self.layout, "output_folder": Path(self.tmp.name) / "consolidated",
+                               "figure": {"color_by": "treatment", "plot_size": (1, 1), "block_outlines": True}}}
+        self.source["figure"] = {"incidence": {"status": "hlb", "group": "treatment"}}
+        sources = {"hlb": self.source}
+
+        with contextlib.redirect_stdout(io.StringIO()):
+            designs = fde.build_designs(layouts)
+            ratings = fde.build_ratings(sources, designs)
+            fde.save_figures(layouts, sources, designs, ratings, which=fde.FIGURE_TYPES)
+
+        self.assertEqual(
+            sorted(p.name for p in (Path(self.tmp.name) / "consolidated" / "figures").iterdir()),
+            ["hlb_20190501_map.png", "hlb_20200501_map.png", "hlb_distribution.png",
+             "hlb_incidence.png", "orchard.png"],
+        )
+
+    def test_many_numeric_values_become_classes(self):
+        from field_design_extraction.figures import score_classes
+
+        classes, labels = score_classes(pd.Series([12, 25, 25.5, 68, None] + list(range(30, 45))))
+
+        self.assertEqual(labels, ["10–20", "20–30", "30–40", "40–50", "50–60", "60–70"])
+        self.assertEqual(classes.iloc[:5].tolist()[:4], ["10–20", "20–30", "20–30", "60–70"])
+        self.assertTrue(pd.isna(classes.iloc[4]))
+
 
 if __name__ == "__main__":
     unittest.main()

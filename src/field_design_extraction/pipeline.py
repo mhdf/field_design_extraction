@@ -1,4 +1,8 @@
-"""Run the steps for a whole project: designs, ratings, export."""
+"""Run the steps for a whole project: designs, ratings, export, figures."""
+
+from pathlib import Path
+
+import pandas as pd
 
 from .export import write_design, write_ratings
 from .layout import build_design, report_design
@@ -75,6 +79,123 @@ def export(layouts, sources, designs, ratings):
 
     print()
     print("EXPORTED")
+
+    for path in paths:
+        print(f"  {path}")
+
+    return paths
+
+
+# --- plot_design options that can be set in a layout's "figure" entry
+DESIGN_FIGURE_KEYS = [
+    "color_by", "colors", "names", "order", "label_column", "show_labels",
+    "rotate", "plot_size", "gaps", "block_outlines", "legend_title", "title",
+]
+
+FIGURE_TYPES = ("design", "distribution", "maps", "incidence")
+
+
+def figure_folder(layout):
+    """<output_folder>/figures, unless the layout sets figure_folder."""
+    return Path(layout.get("figure_folder", Path(layout["output_folder"]) / "figures"))
+
+
+def save_figures(layouts, sources, designs, ratings, which=("design", "distribution"), show=False):
+    """Save the selected figure types (see FIGURE_TYPES) as PNG files.
+
+    design:       <layout_id>.png, the schematic of each layout
+    distribution: <source_id>_distribution.png, classes per date
+    maps:         <source_id>_<YYYYMMDD>_map.png, the schematic colored by the rating of each date
+    incidence:    <source_id>_incidence.png, map ratings only: share of plots with a status per date
+                  and group (needs "incidence": {"status": ..., "group": ...} in the source's "figure")
+
+    Options: a layout's "figure" entry (plot_design keys, hatch_shared_with, hatch_label) and a
+    source's "figure" entry (value, colors, names, order, bins, title, legend_title, xlabel,
+    map_title with {disease} and {date}, incidence).
+    """
+    from .figures import plot_design, plot_distribution, plot_incidence, save_figure
+
+    unknown = set(which) - set(FIGURE_TYPES)
+    if unknown:
+        raise ValueError(f"Unknown figure types {sorted(unknown)}; choose from {FIGURE_TYPES}")
+
+    paths = []
+
+    if "design" in which:
+        for layout_id, design in designs.items():
+            settings = layouts[layout_id].get("figure", {})
+            options = {k: settings[k] for k in DESIGN_FIGURE_KEYS if k in settings}
+            options.setdefault("title", f"Experimental design — {layout_id}")
+            options.setdefault("legend_title", "Blocks")
+
+            # --- hatch plots whose plot number also occurs in another layout
+            other = settings.get("hatch_shared_with")
+            if other in designs:
+                options["hatch"] = design["plot_number"].isin(designs[other]["plot_number"])
+                options["hatch_label"] = settings.get("hatch_label", f"Also in {other}")
+
+            fig = plot_design(design, **options)
+            paths.append(save_figure(fig, figure_folder(layouts[layout_id]) / f"{layout_id}.png", show=show))
+
+    for source_id, linked in ratings.items():
+        source = sources[source_id]
+        layout = layouts[source["layout_id"]]
+        design = designs[source["layout_id"]]
+        settings = source.get("figure", {})
+        folder = figure_folder(layout)
+        value = settings.get("value") or (
+            "status" if source.get("kind") == "map" else value_columns(source)[0]
+        )
+        rated = linked[linked["link_status"] == "linked"]
+        style = {k: settings[k] for k in ("colors", "names", "order", "bins") if k in settings}
+
+        if "distribution" in which:
+            fig = plot_distribution(
+                rated, value=value,
+                title=settings.get("title", f"{source['disease']} — {source_id}"),
+                legend_title=settings.get("legend_title", value),
+                xlabel=settings.get("xlabel", "Frequency of plots [%]"),
+                **style,
+            )
+            paths.append(save_figure(fig, folder / f"{source_id}_distribution.png", show=show))
+
+        if "incidence" in which and "incidence" in settings:
+            options = settings["incidence"]
+            fig = plot_incidence(
+                rated, design,
+                status=options["status"],
+                group=options.get("group", "treatment"),
+                colors=options.get("colors"),
+                names=options.get("names"),
+                exclude=options.get("exclude"),
+                title=options.get("title", f"{source['disease']} incidence"),
+                ylabel=options.get("ylabel"),
+            )
+            paths.append(save_figure(fig, folder / f"{source_id}_incidence.png", show=show))
+
+        if "maps" in which:
+            layout_settings = layout.get("figure", {})
+            options = {
+                k: layout_settings[k]
+                for k in ("label_column", "show_labels", "rotate", "plot_size", "gaps", "block_outlines")
+                if k in layout_settings
+            }
+
+            for date, day in rated.groupby("date"):
+                table = design.merge(day[["plot_key", value]], on="plot_key", how="left")
+                fig = plot_design(
+                    table, color_by=value,
+                    legend_title=settings.get("legend_title", value),
+                    title=settings.get("map_title", "{disease} — {date}").format(
+                        disease=source["disease"], date=date,
+                    ),
+                    **style, **options,
+                )
+                stem = f"{source_id}_{pd.Timestamp(date):%Y%m%d}_map"
+                paths.append(save_figure(fig, folder / f"{stem}.png", show=show))
+
+    print()
+    print("FIGURES")
 
     for path in paths:
         print(f"  {path}")

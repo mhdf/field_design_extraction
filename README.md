@@ -81,6 +81,25 @@ orchard where every cell is a tree). The design then takes every cell as a plot:
 
 Output: one file per date with every plot: `status`, the flags, and the raw cell `value` and `fill`.
 
+### Figures (optional)
+
+```python
+fde.save_figures(layouts, rating_sources, designs, ratings, which=["design", "distribution", "maps"])
+```
+
+| figure | file | what it shows |
+|---|---|---|
+| `design` | `<layout_id>.png` | schematic of the plots, colored by block (or any design column, e.g. treatment) |
+| `distribution` | `<source>_distribution.png` | share of plots per score class or status, one bar per date |
+| `maps` | `<source>_<date>_map.png` | the schematic colored by the rating of that date (grey: not rated) |
+| `incidence` | `<source>_incidence.png` | map ratings: share of plots with a status per date, one line per group (e.g. treatment) |
+
+Files go to `<output_folder>/figures` (or the layout's `figure_folder`). Options: a `"figure"` entry in a layout
+(`title`, `color_by`, `colors`, `names`, `legend_title`, `plot_size`, `rotate`, `show_labels`, `block_outlines`,
+`hatch_shared_with` + `hatch_label`) and in a ratings source (`value`, `title`, `colors`, `legend_title`,
+`xlabel`, `map_title`, `bins`, `incidence`). Scores with many values (e.g. % severity) are grouped into classes
+(`bins`, default 10 units); half scores (1.5, 2.5…) are hatched.
+
 ### Checking the block ranges
 
 `fde.read_cells(workbook, sheet, region)` returns every cell with value, merged range and fill color;

@@ -4,7 +4,8 @@ from .diagnostics import color_summary, plot_cells
 from .export import write_design, write_ratings
 from .layout import DEFAULT_UNIT_RULES, build_design, report_design
 from .maps import classify_cell, read_map_ratings, report_map_ratings
-from .pipeline import build_designs, build_ratings, export, run
+from .figures import plot_design, plot_distribution, plot_incidence, save_figure
+from .pipeline import FIGURE_TYPES, build_designs, build_ratings, export, run, save_figures
 from .ratings import link_ratings, read_ratings, report_ratings
 from .workbook import read_cells
 
@@ -12,6 +13,12 @@ __version__ = "0.1.0"
 
 __all__ = [
     "DEFAULT_UNIT_RULES",
+    "FIGURE_TYPES",
+    "plot_design",
+    "plot_distribution",
+    "plot_incidence",
+    "save_figure",
+    "save_figures",
     "build_design",
     "build_designs",
     "build_ratings",
