@@ -88,12 +88,13 @@ def export(layouts, sources, designs, ratings):
 DESIGN_FIGURE_KEYS = [
     "color_by", "colors", "names", "order", "label_column", "show_labels", "label_rotation",
     "rotate", "plot_size", "gaps", "gap_rule", "gap_min_pairs", "block_outlines", "legend_title", "title",
+    "legend_height", "min_width",
 ]
 
 # --- layout options also used by the rating maps and coverage maps
 MAP_LAYOUT_KEYS = [
     "label_column", "show_labels", "label_rotation", "rotate", "plot_size", "gaps",
-    "gap_rule", "gap_min_pairs", "block_outlines",
+    "gap_rule", "gap_min_pairs", "block_outlines", "legend_height", "min_width",
 ]
 
 FIGURE_TYPES = ("design", "distribution", "maps", "coverage", "incidence")
@@ -120,7 +121,9 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
     source's "figure" entry (value, colors, names, order, bins, title, legend_title, xlabel,
     map_title with {disease} and {date}, incidence).
     """
-    from .figures import group_other_values, plot_design, plot_distribution, plot_incidence, save_figure
+    from .figures import (
+        figure_width, group_other_values, plot_design, plot_distribution, plot_incidence, save_figure,
+    )
 
     unknown = set(which) - set(FIGURE_TYPES)
     if unknown:
@@ -170,33 +173,36 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
                 colors[others_label] = group.get("color", "#9E9E9E")
                 style = {**style, "colors": colors}
 
+        layout_settings = layout.get("figure", {})
+        options = {k: layout_settings[k] for k in MAP_LAYOUT_KEYS if k in layout_settings}
+
         if "distribution" in which:
+            # --- same width and legend band as the maps of this layout
             fig = plot_distribution(
                 rated, value=value,
                 title=settings.get("title", f"{source['disease']} — {source_id}"),
                 legend_title=settings.get("legend_title", value),
                 xlabel=settings.get("xlabel", "Frequency of plots [%]"),
                 segment_labels=settings.get("segment_labels", "count"),
+                width=settings.get("width", figure_width(design, **options)),
+                legend_height=options.get("legend_height"),
                 **style,
             )
             paths.append(save_figure(fig, folder / f"{source_id}_distribution.png", show=show))
 
         if "incidence" in which and "incidence" in settings:
-            options = settings["incidence"]
+            incidence = settings["incidence"]
             fig = plot_incidence(
                 rated, design,
-                status=options["status"],
-                group=options.get("group", "treatment"),
-                colors=options.get("colors"),
-                names=options.get("names"),
-                exclude=options.get("exclude"),
-                title=options.get("title", f"{source['disease']} incidence"),
-                ylabel=options.get("ylabel"),
+                status=incidence["status"],
+                group=incidence.get("group", "treatment"),
+                colors=incidence.get("colors"),
+                names=incidence.get("names"),
+                exclude=incidence.get("exclude"),
+                title=incidence.get("title", f"{source['disease']} incidence"),
+                ylabel=incidence.get("ylabel"),
             )
             paths.append(save_figure(fig, folder / f"{source_id}_incidence.png", show=show))
-
-        layout_settings = layout.get("figure", {})
-        options = {k: layout_settings[k] for k in MAP_LAYOUT_KEYS if k in layout_settings}
 
         # --- coverage: which plots were assessed on each date (ratings tables only)
         if "coverage" in which and source.get("kind") != "map":

@@ -1,5 +1,7 @@
 # Field trial maps and disease assessments: from spreadsheets to analysis-ready tables
 
+<div align="justify">
+
 Field experiments are often recorded in spreadsheets drawn for people, not for analysis: a field map
 (croqui) where each cell or merged range is a plot, coloured by block, and disease ratings typed in separate
 sheets, one per date or per trial, or marked directly on copies of the map. This Python package
@@ -158,6 +160,10 @@ Proportions: `plot_size` = (width, height) of each plot on the schematic, in any
 Make plots wider than tall when rows are farther apart than plots within a row, e.g. the real spacing
 `(6.5, 2.5)` in metres; `rotate` turns the whole map by 90°.
 
+Size: the design, coverage and map figures of a layout all have the same size and plot shapes (the map is
+drawn at a fixed scale, with fixed space for the title and the legend — `legend_height`, in inches); the
+distribution chart takes the same width, so the figures line up side by side.
+
 Gaps between blocks: `gaps` = (horizontal, vertical) size; `gap_rule` `"any"` (default) puts a gap wherever
 blocks meet (at least 2 neighbouring plots), but the gap crosses the whole figure and may cut other blocks;
 `"disjoint"` only separates rows/columns that share no block. `label_rotation`: 0 (horizontal) or 90 (vertical).
@@ -177,3 +183,5 @@ python -m unittest discover -s tests -t tests
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+</div>

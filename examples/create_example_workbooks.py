@@ -83,11 +83,14 @@ def example_1():
     for column in range(1, 27):
         ws.column_dimensions[get_column_letter(column)].width = 5
 
-    # --- ratings: one sheet per assessment date, part of the plots rated, block labels in capitals
-    for sheet_name, share, increase in [("date_1", 0.4, 0.0), ("date_2", 0.6, 25.0)]:
+    # --- ratings: one sheet per assessment date, block labels in capitals; the assessment
+    #     grows over time: date 2 repeats every plot of date 1 and adds new ones
+    order = RNG.permutation(len(plots))
+
+    for sheet_name, share, increase in [("date_1", 0.4, 0.0), ("date_2", 0.7, 25.0)]:
         sheet = wb.create_sheet(sheet_name)
         sheet.append(["plot", "block", "score", "evaluator"])
-        chosen = RNG.choice(len(plots), int(share * len(plots)), replace=False)
+        chosen = order[: int(share * len(plots))]
 
         for i in sorted(chosen):
             label, number, row, column = plots[i]

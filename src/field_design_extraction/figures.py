@@ -255,8 +255,13 @@ def plot_design(
     legend_title=None,
     title=None,
     bins=None,
+    legend_height=None,
+    min_width=7.0,
 ):
     """Schematic map: one rectangle per plot, colored by a column (block, treatment, score, status).
+
+    Figures of the same design share their size: fixed bands for title and legend
+    (legend_height, inches) around a map drawn at a fixed scale.
 
     df:          design table (optionally joined with ratings).
     colors:      {value: color}; numbers default to the disease scale, others to the block palette.
@@ -275,6 +280,7 @@ def plot_design(
 
     df = schematic_positions(df, plot_size, gaps, rotate, gap_rule, gap_min_pairs)
     width, height = df.attrs["plot_size"]
+    legend_height = LEGEND_BAND if legend_height is None else legend_height
 
     classes, class_order = score_classes(df[color_by], bins)
     if class_order is not None:
@@ -295,12 +301,11 @@ def plot_design(
 
     max_x = df["x"].max() + width
     max_y = df["y"].max() + height
+    fig_w, fig_h, axes_box = _map_frame(max_x, max_y, legend_height, min_width)
 
     with _style():
-        fig, ax = plt.subplots(figsize=(
-            max(8, min(18, max_x * 0.65)),
-            max(6, min(16, max_y * 0.42)),
-        ))
+        fig = plt.figure(figsize=(fig_w, fig_h))
+        ax = fig.add_axes(axes_box)
 
         for is_hatched in (False, True):
             part = df[hatched == is_hatched]
@@ -369,18 +374,19 @@ def plot_design(
                     bbox={"facecolor": "white", "edgecolor": "none", "alpha": 0.8, "pad": 1.5},
                 )
 
+        # --- the axes box has the map's proportions, so plots keep their shape
         ax.set_xlim(-0.6, max_x + 0.6)
-        ax.set_ylim(max_y + 0.6, -0.5)
-        ax.set_aspect("equal", adjustable="box")
+        ax.set_ylim(max_y + 0.5, -0.6)
         ax.set_xticks([])
         ax.set_yticks([])
         for spine in ax.spines.values():
             spine.set_visible(False)
 
         if title:
-            ax.set_title(title, pad=15)
+            fig.text(0.5, 1 - TITLE_BAND / 2 / fig_h, title, ha="center", va="center",
+                     fontsize=FONT_SIZE + 2)
 
-        # --- legends below the map
+        # --- legends in the band below the map
         handles = [
             Patch(facecolor=fill, edgecolor=edge, hatch=value_hatch, label=names.get(value, _format(value)))
             for value, (fill, edge, value_hatch) in styles.items()
@@ -388,27 +394,54 @@ def plot_design(
         if df[color_by].isna().any():
             handles.append(Patch(facecolor=NOT_RATED_COLOR, edgecolor=EDGE_COLOR, label="not rated"))
 
-        legends = [ax.legend(
+        columns = _legend_columns(len(handles))
+        fig.legend(
             handles=handles,
-            title=color_by if legend_title is None else legend_title,
+            title=(color_by if legend_title is None else legend_title) or None,
             loc="upper center",
-            bbox_to_anchor=(0.5, -0.01),
-            ncol=_legend_columns(len(handles)),
+            bbox_to_anchor=(0.5, (legend_height - 0.15) / fig_h),
+            ncol=columns,
             frameon=True,
-        )]
+        )
 
         if hatched.any() and hatch_label:
-            ax.add_artist(legends[0])
-            legends.append(ax.legend(
+            rows = -(-len(handles) // columns)
+            below = 0.15 + 0.28 * (rows + 1) + 0.1
+            fig.legend(
                 handles=[Patch(facecolor="#E5E5E5", edgecolor=EDGE_COLOR, hatch="///", label=hatch_label)],
                 loc="upper center",
-                bbox_to_anchor=(0.5, -0.01 - 0.045 * (2 + (len(handles) - 1) // _legend_columns(len(handles)))),
+                bbox_to_anchor=(0.5, (legend_height - below) / fig_h),
                 frameon=False,
-            ))
+            )
 
-        fig.legends_below = legends
+        fig.fixed_size = True
 
     return fig
+
+
+# --- fixed bands (inches) so that figures of one layout share their size
+TITLE_BAND = 0.7
+SIDE_MARGIN = 0.4
+LEGEND_BAND = 1.6
+
+
+def _map_frame(max_x, max_y, legend_height=LEGEND_BAND, min_width=7.0):
+    """(figure width, figure height, axes box) for a map spanning max_x by max_y plot units."""
+    data_w, data_h = max_x + 1.2, max_y + 1.1
+    scale = min(0.35, 11 / data_w, 13 / data_h)      # inches per plot unit
+    map_w, map_h = data_w * scale, data_h * scale
+    fig_w = max(map_w + 2 * SIDE_MARGIN, min_width)
+    fig_h = TITLE_BAND + map_h + legend_height
+    box = [(fig_w - map_w) / 2 / fig_w, legend_height / fig_h, map_w / fig_w, map_h / fig_h]
+    return fig_w, fig_h, box
+
+
+def figure_width(design, plot_size=(1.0, 1.8), gaps=(0.25, 0.20), rotate=None, gap_rule="any",
+                 gap_min_pairs=2, min_width=7.0, **_):
+    """Width (inches) of the schematic figures of a design: other figures can share it."""
+    df = schematic_positions(design, plot_size, gaps, rotate, gap_rule, gap_min_pairs)
+    width, height = df.attrs["plot_size"]
+    return _map_frame(df["x"].max() + width, df["y"].max() + height, min_width=min_width)[0]
 
 
 def _legend_columns(n):
@@ -438,12 +471,16 @@ def plot_distribution(
     xlabel="Frequency of plots [%]",
     bins=None,
     segment_labels="count",
+    width=9.0,
+    legend_height=None,
 ):
     """Horizontal 100% stacked bars: share of plots in each class (score or status), one bar per date.
 
     bins:           class edges for numbers with many values (see score_classes).
     segment_labels: text inside each segment: "count" (number of plots), "percent" or None.
+    width:          figure width in inches (e.g. figure_width(design), to match the maps).
     """
+    legend_height = LEGEND_BAND if legend_height is None else legend_height
     if segment_labels not in ("count", "percent", None):
         raise ValueError("segment_labels must be 'count', 'percent' or None")
 
@@ -467,9 +504,15 @@ def plot_distribution(
     groups = list(percent.index)
 
     with _style():
-        height = 2.2 + 0.45 * len(groups)
-        fig, ax = plt.subplots(figsize=(9, height))
-        fig.subplots_adjust(left=0.2, right=0.97, top=1 - 0.6 / height, bottom=1.0 / height)
+        # --- fixed bands: title, bars, x axis, legend; date labels on the left
+        bars_h = 0.6 * len(groups) + 0.3
+        axis_band, left, right = 0.75, 1.6, 0.35
+        fig_h = TITLE_BAND + bars_h + axis_band + legend_height
+        fig = plt.figure(figsize=(width, fig_h))
+        ax = fig.add_axes([
+            left / width, (legend_height + axis_band) / fig_h,
+            (width - left - right) / width, bars_h / fig_h,
+        ])
         y_positions = np.arange(len(groups))[::-1] * 0.6
 
         for y, group in zip(y_positions, groups):
@@ -504,23 +547,24 @@ def plot_distribution(
             spine.set_color("#333333")
             spine.set_linewidth(1.2)
         if title:
-            ax.set_title(title, pad=14)
+            fig.text(0.5, 1 - TITLE_BAND / 2 / fig_h, title, ha="center", va="center",
+                     fontsize=FONT_SIZE + 2)
 
         handles = [
             Patch(facecolor=fill, edgecolor=edge, hatch=hatch, label=names.get(v, _format(v)))
             for v, (fill, edge, hatch) in styles.items()
         ]
-        axes_height = height * (ax.get_position().y1 - ax.get_position().y0)
-        fig.legends_below = [ax.legend(
+        fig.legend(
             handles=handles,
             title=legend_title or value,
             loc="upper center",
-            bbox_to_anchor=(0.5, -0.75 / axes_height),
+            bbox_to_anchor=(0.5, (legend_height - 0.15) / fig_h),
             ncol=_legend_columns(len(handles)),
             frameon=True,
             fancybox=False,
             edgecolor="#555555",
-        )]
+        )
+        fig.fixed_size = True
 
     return fig
 
@@ -590,15 +634,22 @@ def plot_incidence(
 # =============================================
 
 def save_figure(fig, path, dpi=300, show=False):
-    """Save as PNG (white background, legends included); close unless show=True."""
+    """Save as PNG (white background, legends included); close unless show=True.
+
+    Figures laid out on a fixed frame keep their size; others are cropped to their content.
+    """
     import matplotlib.pyplot as plt
 
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(
-        path, dpi=dpi, bbox_inches="tight", pad_inches=0.2, facecolor="white",
-        bbox_extra_artists=getattr(fig, "legends_below", None),
-    )
+
+    if getattr(fig, "fixed_size", False):
+        fig.savefig(path, dpi=dpi, facecolor="white")
+    else:
+        fig.savefig(
+            path, dpi=dpi, bbox_inches="tight", pad_inches=0.2, facecolor="white",
+            bbox_extra_artists=getattr(fig, "legends_below", None),
+        )
 
     if show:
         plt.show()

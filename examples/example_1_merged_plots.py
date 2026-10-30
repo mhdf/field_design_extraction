@@ -35,7 +35,7 @@ layouts = {
             "names": {"BLOCK_A": "Block A", "BLOCK_B": "Block B", "BLOCK_C": "Block C", "BLOCK_D": "Block D"},
             "colors": {"BLOCK_A": "#F2B134", "BLOCK_B": "#F28E2B", "BLOCK_C": "#43B97F", "BLOCK_D": "#36A9D6"},
             "legend_title": "Blocks",
-            "plot_size": (1.0, 1.8),
+            "plot_size": (1.3, 1.8),
             "label_rotation": 90,
         },
     },
