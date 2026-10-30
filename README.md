@@ -188,6 +188,8 @@ each block marked.
 python -m unittest discover -s tests -t tests
 ```
 
+GitHub runs the same tests (Python 3.10 and 3.12, Linux) on every change to `main` and on every pull request.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
