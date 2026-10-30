@@ -34,8 +34,8 @@ layouts = {
             "title": "Example 2 — experimental design",
             "names": {trial: trial.replace("_", " ").title() for trial in trials},
             "legend_title": "Trials",
-            "plot_size": (1.0, 1.0),
-            "label_rotation": 0,
+            "plot_size": (1.3, 1.8),
+            "label_rotation": 90,
         },
     },
 }

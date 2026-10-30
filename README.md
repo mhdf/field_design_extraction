@@ -62,7 +62,7 @@ python examples/example_2_one_sheet_per_trial.py   # writes examples/output/exam
 
 Experimental design — four blocks of plots:
 
-<p align="center"><img src="docs/images/example_1_design.png" width="60%"></p>
+<img src="docs/images/example_1_design.png" width="49%">
 
 Plots assessed on each date (black):
 
@@ -78,9 +78,17 @@ Share of the assessed plots in each score class, per date (numbers inside the ba
 
 ### Example 2
 
-Disease severity of every plot, one trial per colour group of the field map:
+Experimental design — four trials, plots numbered from 1 in each trial:
 
-<img src="docs/images/example_2_map.png" width="98%">
+<img src="docs/images/example_2_design.png" width="49%">
+
+Disease severity of each plot (one assessment date):
+
+<img src="docs/images/example_2_map.png" width="49%">
+
+Share of the plots in each severity class (numbers inside the bar: plots):
+
+<p align="center"><img src="docs/images/example_2_distribution.png" width="75%"></p>
 
 ## Settings
 
