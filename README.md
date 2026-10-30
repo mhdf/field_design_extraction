@@ -15,7 +15,8 @@ occurs twice).
 In the Python environment that runs the project scripts:
 
 ```
-pip install -e path\to\field_design_extraction
+git clone https://github.com/mhdf/field_design_extraction.git
+pip install -e field_design_extraction
 ```
 
 `-e` (editable) makes changes to the package code take effect without reinstalling.
