@@ -150,6 +150,8 @@ def example_2():
         sheet["A2"], sheet["B2"] = "Growth stage:", 71
         sheet["A3"], sheet["B3"] = "Assessed area:", "Plot"
         sheet["A7"], sheet["B7"] = "Plot", "Severity (%)"
+        sheet.column_dimensions["A"].width = 15
+        sheet.column_dimensions["B"].width = 13
 
         for number, r, c in sorted(plots):
             score = 10 + 85 * field[r, c] + RNG.normal(0, 3)

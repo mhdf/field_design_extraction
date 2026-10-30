@@ -76,7 +76,14 @@ ratings, linked to the plots), and prints what it found. The sections below expl
 
 ## Use
 
-A project script holds two settings dictionaries and runs the steps:
+Your workbook stays as it is: the package reads it (it never changes it) and writes its tables and figures to
+a separate output folder. What tells the package how to read *your* file are the settings in your script —
+the sheet with the field map, the cells holding each block's plots, the sheets with the ratings, the row with
+the column names, the columns with the plot number, the block and the values. Nothing in the code is tied to
+one layout: another workbook, organised differently, needs only other settings.
+
+A project script holds those settings in two dictionaries, `layouts` (field maps) and `rating_sources`
+(ratings), and runs the steps:
 
 ```python
 import field_design_extraction as fde
@@ -87,26 +94,54 @@ fde.export(layouts, rating_sources, designs, ratings)   # CSV files
 ```
 
 Each step prints what it found: plots per block, plot numbers repeated within a block, and per date how many
-ratings were linked and why the others were not.
+ratings were linked and why the others were not. `fde.plot_sheet(workbook, sheet, region)` draws a sheet as it
+looks in Excel, to check the cells you put in the settings.
 
 ## Examples
 
-Two synthetic examples (made-up plots and scores, 0–100, with spatial patches) in `examples/`:
-
-| example | field map | ratings |
-|---|---|---|
-| `example_1_merged_plots.py` | 4 blocks, 210 plots, each plot number in a 2-cell merged range | one sheet per date (2 dates), a block column, part of the plots rated |
-| `example_2_one_sheet_per_trial.py` | 4 trials side by side, 200 plots numbered from 1 in each trial | one sheet per trial, column names on row 7, MIN/MAX rows below the table |
+Two synthetic workbooks in `examples/data/` stand in for field files typed by hand. They are made by
+`examples/create_example_workbooks.py` (fixed random seed): field maps with numbered plots in coloured blocks,
+and ratings from 0 to 100 that form patches across the field, as disease often does. Each example script
+follows the three steps of a real project: look at the input workbook, describe it in the settings, run.
 
 ```
-python examples/create_example_workbooks.py        # writes examples/data/*.xlsx (fixed random seed)
+python examples/create_example_workbooks.py        # writes examples/data/*.xlsx
 python examples/example_1_merged_plots.py          # writes examples/output/example_1/
 python examples/example_2_one_sheet_per_trial.py   # writes examples/output/example_2/
 ```
 
-### Example 1
+### Example 1 — plots in merged cells, one ratings sheet per date
 
-Experimental design — four blocks of plots:
+**1. The input workbook.** Sheet `field_map` holds the field map: four coloured blocks, each plot number in two
+merged cells. Sheets `date_1` and `date_2` hold the ratings of each assessment date, one row per rated plot;
+on date 2 the plots of date 1 were assessed again, together with new ones.
+
+<img src="docs/images/example_1_input_field_map.png" width="66%"> <img src="docs/images/example_1_input_ratings.png" width="28%">
+
+**2. The settings describe that workbook** (`examples/example_1_merged_plots.py`):
+
+| In the workbook | In the settings |
+|---|---|
+| field map on sheet `field_map`, cells B3:Y23 | `"sheet": "field_map"`, `"region": "B3:Y23"` |
+| Block A: plots in columns B–G, rows 4–23 (and so on for B, C, D) | `{"block_id": "BLOCK_A", "regions": ["B4:G23"]}` |
+| each plot number in the top cell of two merged cells | `"unit_rules": {"merged": True, "anchor": True}` |
+| one ratings sheet per date: `date_1`, `date_2` | `"assessments": {"first": {"sheet": "date_1", "date": "Date 1"}, ...}` |
+| column names on row 1: `plot`, `block`, `score`, `evaluator` | `"plot_column": "plot"`, `"block_column": "block"`, `"value_columns": {...}` |
+| blocks written `BLOCK A` in the ratings | `"block_mapping": {"BLOCK A": "BLOCK_A", ...}` |
+
+**3. The result.** A design table with one row per plot, and one ratings table per date:
+
+| plot_key | block_id | block_label | plot_number | row | column |
+|---|---|---|---|---|---|
+| BLOCK_A:160:4:2 | BLOCK_A | Block A | 160 | 4 | 2 |
+| BLOCK_A:159:4:3 | BLOCK_A | Block A | 159 | 4 | 3 |
+
+| plot_key | block_id | plot_number | date | disease | score | evaluator |
+|---|---|---|---|---|---|---|
+| BLOCK_A:103:22:4 | BLOCK_A | 103 | Date 2 | leaf_spot | 24 | Evaluator 1 |
+| BLOCK_A:104:22:5 | BLOCK_A | 104 | Date 2 | leaf_spot | 29 | Evaluator 1 |
+
+And the figures — experimental design:
 
 <img src="docs/images/example_1_design.png" width="49%">
 
@@ -122,13 +157,38 @@ Share of the assessed plots in each score class, per date (numbers inside the ba
 
 <p align="center"><img src="docs/images/example_1_distribution.png" width="75%"></p>
 
-### Example 2
+### Example 2 — one cell per plot, one ratings sheet per trial
 
-Experimental design — four trials, plots numbered from 1 in each trial:
+**1. The input workbook.** Sheet `field_map` holds four trials side by side, plots numbered from 1 in each
+trial. Each trial has its own ratings sheet (`Trial_1` … `Trial_4`), with notes on the first rows, the column
+names on row 7, and MIN/MAX formulas below the table.
+
+<img src="docs/images/example_2_input_field_map.png" width="72%"> <img src="docs/images/example_2_input_ratings.png" width="22%">
+
+**2. The settings describe that workbook** (`examples/example_2_one_sheet_per_trial.py`):
+
+| In the workbook | In the settings |
+|---|---|
+| field map on sheet `field_map`, cells B3:Z11 | `"sheet": "field_map"`, `"region": "B3:Z11"` |
+| Trial 1: plots in B4:F11 (and so on for trials 2–4) | `{"block_id": "TRIAL_1", "regions": ["B4:F11"]}` |
+| one plot number per cell | `"unit_rules": {"value_types": ["numeric"], "merged": False}` |
+| one ratings sheet per trial, no block column | `"block_column": None`, `"assessments": {"TRIAL_1": {"sheet": "Trial_1", "block": "TRIAL_1", ...}, ...}` |
+| notes on rows 1–3, column names on row 7 | `"header_row": 7` |
+| columns `Plot` and `Severity (%)` | `"plot_column": "Plot"`, `"value_columns": {"Severity (%)": "severity"}` |
+| MIN/MAX rows below the table (no plot number) | nothing to set: rows without a plot number are dropped |
+
+**3. The result** — ratings table (first rows) and figures:
+
+| plot_key | block_id | plot_number | date | disease | severity |
+|---|---|---|---|---|---|
+| TRIAL_1:1:11:2 | TRIAL_1 | 1 | Date 1 | leaf_blotch | 69 |
+| TRIAL_1:2:11:3 | TRIAL_1 | 2 | Date 1 | leaf_blotch | 53 |
+
+Experimental design:
 
 <img src="docs/images/example_2_design.png" width="49%">
 
-Disease severity of each plot (one assessment date):
+Disease severity of each plot:
 
 <img src="docs/images/example_2_map.png" width="49%">
 
@@ -224,6 +284,8 @@ blocks meet (at least 2 neighbouring plots), but the gap crosses the whole figur
 
 ### Checking the block ranges
 
+`fde.plot_sheet(workbook, sheet, region)` draws the sheet as it looks in Excel (column letters, row numbers,
+fill colours, values, merged cells), to read off the cell ranges for the settings;
 `fde.read_cells(workbook, sheet, region)` returns every cell with value, merged range and fill color;
 `fde.color_summary(cells)` groups them by color; `fde.plot_cells(cells, design)` draws the map with the plots of
 each block marked.

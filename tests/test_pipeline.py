@@ -293,6 +293,27 @@ class MapRatingsTest(unittest.TestCase):
              "hlb_incidence.png", "orchard.png"],
         )
 
+    def test_sheet_picture_and_excel_colors(self):
+        import matplotlib
+        matplotlib.use("Agg")
+        from openpyxl.styles.colors import Color
+
+        from field_design_extraction.sheets import excel_color
+
+        self.assertEqual(excel_color(Color(rgb="FF00FF00")), "#00FF00")
+        self.assertEqual(excel_color(Color(theme=1)), "#000000")          # theme text colour
+        # --- Accent 1, 60% lighter: Excel shows #B4C6E7 (rounding may differ by 1 per channel)
+        lighter = excel_color(Color(theme=4, tint=0.6))
+        for i in (1, 3, 5):
+            self.assertLessEqual(abs(int(lighter[i:i + 2], 16) - int("B4C6E7"[i - 1:i + 1], 16)), 1)
+        self.assertIsNone(excel_color(None))
+
+        fig = fde.plot_sheet(self.workbook, "May 2020", "A1:C2", title="orchard")
+        path = fde.save_figure(fig, Path(self.tmp.name) / "sheet.png")
+        self.assertTrue(path.exists())
+        texts = {t.get_text() for t in fig.axes[0].texts}
+        self.assertTrue({"1", "R2", "Gomose", "A", "B", "C"} <= texts)   # cell values and column letters
+
     def test_dates_and_date_labels(self):
         from field_design_extraction.ratings import date_label, date_stem
 

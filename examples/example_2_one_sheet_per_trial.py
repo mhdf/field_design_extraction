@@ -1,7 +1,13 @@
-"""Example 2 — one cell per plot, one ratings sheet per trial (header on row 7).
+"""Example 2 — one cell per plot, one ratings sheet per trial (column names on row 7).
 
     python examples/create_example_workbooks.py     (once: creates examples/data)
     python examples/example_2_one_sheet_per_trial.py
+
+The workbook stands in for a field file typed by hand: a field map with four trials
+side by side (sheet field_map) and one ratings sheet per trial (Trial_1 ... Trial_4),
+each with a few lines of notes above the table. The settings below describe how THIS
+workbook is organised; for another workbook, the same keys get the sheets, cells and
+columns of that file.
 
 Outputs: examples/output/example_2/ (CSV tables and figures/).
 """
@@ -12,11 +18,34 @@ import field_design_extraction as fde
 
 HERE = Path(__file__).resolve().parent
 WORKBOOK = HERE / "data" / "example_2_one_sheet_per_trial.xlsx"
+FIGURES = HERE / "output" / "example_2" / "figures"
 
+
+# =============================================
+# 1. LOOK AT THE INPUT WORKBOOK
+# =============================================
+
+# --- pictures of the sheets as they look in Excel
+fde.save_figure(
+    fde.plot_sheet(WORKBOOK, "field_map", "A1:AA11", title="Input workbook — sheet field_map"),
+    FIGURES / "input_field_map.png", dpi=150,
+)
+fde.save_figure(
+    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C14", title="Input workbook — sheet Trial_1 (first rows)"),
+    FIGURES / "input_ratings_trial_1.png", dpi=150,
+)
+
+
+# =============================================
+# 2. DESCRIBE THE WORKBOOK IN THE SETTINGS
+# =============================================
+
+# --- where each trial's plots are on the map (the coloured areas)
 trials = {"TRIAL_1": "B4:F11", "TRIAL_2": "G4:J11", "TRIAL_3": "K4:T11", "TRIAL_4": "U4:Z11"}
 
 layouts = {
     "example_2_design": {
+        # --- the field map: sheet field_map, trial names and plots in B3:Z11
         "workbook": WORKBOOK,
         "sheet": "field_map",
         "region": "B3:Z11",
@@ -46,13 +75,14 @@ rating_sources = {
         "disease": "leaf_blotch",
         "workbook": WORKBOOK,
 
-        # --- rows 1-5 hold date, growth stage and assessed area
+        # --- rows 1-3 hold notes (date, growth stage, assessed area);
+        #     the column names are on row 7
         "header_row": 7,
         "plot_column": "Plot",
-
-        # --- one sheet per trial: the block comes from each assessment
-        "block_column": None,
         "value_columns": {"Severity (%)": "severity"},
+
+        # --- no block column: each sheet holds one trial, named in "block"
+        "block_column": None,
         "assessments": {
             trial: {"sheet": trial.title(), "date": "Date 1", "block": trial}
             for trial in trials
@@ -67,6 +97,11 @@ rating_sources = {
         },
     },
 }
+
+
+# =============================================
+# 3. RUN: TABLES AND FIGURES
+# =============================================
 
 designs = fde.build_designs(layouts)
 ratings = fde.build_ratings(rating_sources, designs)

@@ -44,6 +44,23 @@ def date_stem(date):
     return re.sub(r"[^0-9a-z]+", "_", str(date).lower()).strip("_")
 
 
+def _whole_numbers(values):
+    """Numbers that are all whole stay whole (69, not 69.0); other columns are unchanged.
+
+    pandas reads a column with empty cells (e.g. MIN/MAX rows below a table) as decimals.
+    """
+    numbers = pd.to_numeric(values, errors="coerce")
+
+    if (
+        values.notna().any()
+        and numbers.notna().equals(values.notna())
+        and (numbers.dropna() % 1 == 0).all()
+    ):
+        return numbers.astype("Int64")
+
+    return values
+
+
 def _block_id(label, mapping):
     """Block label in the ratings → block_id of the design."""
     if label is None or (not isinstance(label, str) and pd.isna(label)):
@@ -112,7 +129,7 @@ def read_ratings(source):
         })
 
         for source_name, output_name in value_columns.items():
-            table[output_name] = df[source_name]
+            table[output_name] = _whole_numbers(df[source_name])
 
         tables.append(table)
 
