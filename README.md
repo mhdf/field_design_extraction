@@ -90,7 +90,7 @@ fde.save_figures(layouts, rating_sources, designs, ratings, which=["design", "di
 | figure | file | what it shows |
 |---|---|---|
 | `design` | `<layout_id>.png` | schematic of the plots, colored by block (or any design column, e.g. treatment) |
-| `distribution` | `<source>_distribution.png` | share of plots per score class or status, one bar per date |
+| `distribution` | `<source>_distribution.png` | share of plots per score class or status, one bar per date; the segments show the number of plots (`segment_labels`: `"count"`, `"percent"` or `None`) |
 | `maps` | `<source>_<date>_map.png` | the schematic colored by the rating of that date (grey: not rated) |
 | `coverage` | `<source>_<date>_coverage.png` | ratings tables: which plots were assessed on that date |
 | `incidence` | `<source>_incidence.png` | map ratings: share of plots with a status per date, one line per group (e.g. treatment) |

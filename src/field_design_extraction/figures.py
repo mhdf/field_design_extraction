@@ -411,11 +411,16 @@ def plot_distribution(
     legend_title=None,
     xlabel="Frequency of plots [%]",
     bins=None,
+    segment_labels="count",
 ):
     """Horizontal 100% stacked bars: share of plots in each class (score or status), one bar per date.
 
-    bins: class edges for numbers with many values (see score_classes).
+    bins:           class edges for numbers with many values (see score_classes).
+    segment_labels: text inside each segment: "count" (number of plots), "percent" or None.
     """
+    if segment_labels not in ("count", "percent", None):
+        raise ValueError("segment_labels must be 'count', 'percent' or None")
+
     import matplotlib.pyplot as plt
     from matplotlib.patches import Patch
 
@@ -449,8 +454,12 @@ def plot_distribution(
                     continue
                 ax.barh(y, share, left=left, height=0.5, color=fill, edgecolor=edge,
                         linewidth=1.0, hatch=hatch, zorder=3)
-                if share >= 5:
-                    ax.text(left + share / 2, y, f"{share:.1f}", ha="center", va="center",
+                if segment_labels and share >= 5:
+                    text = (
+                        f"{int(counts.loc[group, category]):,}" if segment_labels == "count"
+                        else f"{share:.1f}"
+                    )
+                    ax.text(left + share / 2, y, text, ha="center", va="center",
                             color="#303030", fontsize=FONT_SIZE - 1)
                 left += share
 

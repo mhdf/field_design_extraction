@@ -164,6 +164,7 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
                 title=settings.get("title", f"{source['disease']} — {source_id}"),
                 legend_title=settings.get("legend_title", value),
                 xlabel=settings.get("xlabel", "Frequency of plots [%]"),
+                segment_labels=settings.get("segment_labels", "count"),
                 **style,
             )
             paths.append(save_figure(fig, folder / f"{source_id}_distribution.png", show=show))
