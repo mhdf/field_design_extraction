@@ -89,6 +89,25 @@ def score_classes(values, bins=None, max_classes=12):
     return classes.where(numbers.notna()), labels
 
 
+def group_other_values(values, keep, label="others", order=None):
+    """Values not in `keep` become one class, e.g. 'others (gummosis, dead, missing)'.
+
+    order: order in which the grouped values are listed (default: as they occur).
+    Returns (values, label of the grouped class or None when nothing was grouped).
+    """
+    values = pd.Series(values)
+    present = list(values.dropna().unique())
+    others = [v for v in (order or []) if v in present and v not in keep]
+    others += [v for v in present if v not in keep and v not in others]
+
+    if not others:
+        return values, None
+
+    full_label = f"{label} ({', '.join(str(v).replace('_', ' ') for v in others)})"
+
+    return values.where(values.isin(keep) | values.isna(), full_label), full_label
+
+
 def value_styles(values, colors=None, order=None, scale=False):
     """{value: (fill, edge, hatch)} for the categories in `values`.
 

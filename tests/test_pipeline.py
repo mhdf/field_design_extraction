@@ -293,6 +293,18 @@ class MapRatingsTest(unittest.TestCase):
              "hlb_incidence.png", "orchard.png"],
         )
 
+    def test_other_classes_are_grouped_with_their_names(self):
+        from field_design_extraction.figures import group_other_values
+
+        values, label = group_other_values(
+            pd.Series(["healthy", "hlb", "dead", "no_tree", None, "dead"]),
+            keep=["healthy", "hlb"], order=["healthy", "hlb", "no_tree", "dead"],
+        )
+
+        self.assertEqual(label, "others (no tree, dead)")
+        self.assertEqual(values.tolist()[:4], ["healthy", "hlb", label, label])
+        self.assertIsNone(values.iloc[4])
+
     def test_many_numeric_values_become_classes(self):
         from field_design_extraction.figures import score_classes
 

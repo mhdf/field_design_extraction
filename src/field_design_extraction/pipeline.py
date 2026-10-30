@@ -122,7 +122,7 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
     source's "figure" entry (value, colors, names, order, bins, title, legend_title, xlabel,
     map_title with {disease} and {date}, incidence).
     """
-    from .figures import plot_design, plot_distribution, plot_incidence, save_figure
+    from .figures import group_other_values, plot_design, plot_distribution, plot_incidence, save_figure
 
     unknown = set(which) - set(FIGURE_TYPES)
     if unknown:
@@ -157,6 +157,19 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
         )
         rated = linked[linked["link_status"] == "linked"]
         style = {k: settings[k] for k in ("colors", "names", "order", "bins") if k in settings}
+
+        # --- figures only: classes not in "keep" become one "others (...)" class
+        group = settings.get("group_others")
+        if group:
+            rated = rated.copy()
+            rated[value], others_label = group_other_values(
+                rated[value], group["keep"], group.get("label", "others"),
+                order=list(style.get("colors", {})),
+            )
+            if others_label:
+                colors = {k: c for k, c in style.get("colors", {}).items() if k in group["keep"]}
+                colors[others_label] = group.get("color", "#9E9E9E")
+                style = {**style, "colors": colors}
 
         if "distribution" in which:
             fig = plot_distribution(

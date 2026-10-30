@@ -98,8 +98,17 @@ fde.save_figures(layouts, rating_sources, designs, ratings, which=["design", "di
 Files go to `<output_folder>/figures` (or the layout's `figure_folder`). Options: a `"figure"` entry in a layout
 (`title`, `color_by`, `colors`, `names`, `legend_title`, `plot_size`, `rotate`, `show_labels`, `label_rotation`,
 `gaps`, `gap_rule`, `block_outlines`, `hatch_shared_with` + `hatch_label`) and in a ratings source (`value`,
-`title`, `colors`, `legend_title`, `xlabel`, `map_title`, `coverage_title`, `bins`, `incidence`). Scores with many
+`title`, `colors`, `legend_title`, `xlabel`, `map_title`, `coverage_title`, `bins`, `segment_labels`,
+`group_others`, `incidence`). Scores with many
 values (e.g. % severity) are grouped into classes (`bins`, default 10 units); half scores (1.5, 2.5…) are hatched.
+
+`group_others` (ratings source), e.g. `{"keep": ["healthy", "hlb"], "label": "others", "color": "#8C8C8C"}`:
+in the figures, every other class becomes one class whose name lists what it contains, e.g.
+`others (gummosis, dead, missing)`; the CSV files keep the detailed values.
+
+Proportions: `plot_size` = (width, height) of each plot on the schematic, in any unit (only the ratio matters).
+Make plots wider than tall when rows are farther apart than plots within a row, e.g. the real spacing
+`(6.5, 2.5)` in metres; `rotate` turns the whole map by 90°.
 
 Gaps between blocks: `gaps` = (horizontal, vertical) size; `gap_rule` `"any"` (default) puts a gap wherever
 blocks meet (at least 2 neighbouring plots), but the gap crosses the whole figure and may cut other blocks;
