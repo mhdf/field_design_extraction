@@ -28,6 +28,52 @@ pip install -e field_design_extraction
 
 `-e` (editable) makes changes to the package code take effect without reinstalling.
 
+## Quick start
+
+A workbook `trial.xlsx` with two sheets:
+
+- `map` — the field map: plot numbers in cells B3:K8, block 1 in columns B–F, block 2 in columns G–K;
+- `ratings` — one row per rated plot, with the columns `plot`, `block` (`1` or `2`) and `score`.
+
+```python
+from pathlib import Path
+
+import field_design_extraction as fde
+
+layouts = {
+    "trial": {
+        "workbook": Path("trial.xlsx"),
+        "sheet": "map",
+        "region": "B3:K8",
+        "output_folder": Path("consolidated"),
+        "blocks": [
+            {"block_id": "B1", "label": "Block 1", "regions": ["B3:F8"]},
+            {"block_id": "B2", "label": "Block 2", "regions": ["G3:K8"]},
+        ],
+    },
+}
+
+rating_sources = {
+    "trial_score": {
+        "layout_id": "trial",
+        "disease": "leaf_spot",
+        "workbook": Path("trial.xlsx"),
+        "plot_column": "plot",
+        "block_column": "block",
+        "block_mapping": {"1": "B1", "2": "B2"},
+        "value_columns": {"score": "score"},
+        "assessments": {"first": {"sheet": "ratings", "date": "2025-09-01"}},
+    },
+}
+
+designs, ratings = fde.run(layouts, rating_sources)          # tables in consolidated/
+fde.save_figures(layouts, rating_sources, designs, ratings)  # optional: consolidated/figures/
+```
+
+This writes `consolidated/trial.csv` (one row per plot) and `consolidated/trial_score_20250901.csv` (the
+ratings, linked to the plots), and prints what it found. The sections below explain each setting; the
+[examples](#examples) show complete scripts with figures.
+
 ## Use
 
 A project script holds two settings dictionaries and runs the steps:
