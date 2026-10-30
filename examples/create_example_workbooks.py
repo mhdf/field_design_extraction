@@ -83,9 +83,9 @@ def example_1():
     for column in range(1, 27):
         ws.column_dimensions[get_column_letter(column)].width = 5
 
-    # --- ratings: one sheet per date, part of the plots rated, block labels in capitals
-    for date, share, increase in [("20250815", 0.4, 0.0), ("20250905", 0.6, 25.0)]:
-        sheet = wb.create_sheet(date)
+    # --- ratings: one sheet per assessment date, part of the plots rated, block labels in capitals
+    for sheet_name, share, increase in [("date_1", 0.4, 0.0), ("date_2", 0.6, 25.0)]:
+        sheet = wb.create_sheet(sheet_name)
         sheet.append(["plot", "block", "score", "evaluator"])
         chosen = RNG.choice(len(plots), int(share * len(plots)), replace=False)
 
@@ -143,7 +143,7 @@ def example_2():
     # --- ratings: metadata rows, header on row 7, MIN/MAX rows below the table
     for name, plots in trial_plots.items():
         sheet = wb.create_sheet(name.replace(" ", "_"))
-        sheet["A1"], sheet["B1"] = "Date:", "2025-09-10"
+        sheet["A1"], sheet["B1"] = "Date:", "Date 1"
         sheet["A2"], sheet["B2"] = "Growth stage:", 71
         sheet["A3"], sheet["B3"] = "Assessed area:", "Plot"
         sheet["A7"], sheet["B7"] = "Plot", "Severity (%)"

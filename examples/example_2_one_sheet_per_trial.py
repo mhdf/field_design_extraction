@@ -54,7 +54,7 @@ rating_sources = {
         "block_column": None,
         "value_columns": {"Severity (%)": "severity"},
         "assessments": {
-            trial: {"sheet": trial.title(), "date": "2025-09-10", "block": trial}
+            trial: {"sheet": trial.title(), "date": "Date 1", "block": trial}
             for trial in trials
         },
 

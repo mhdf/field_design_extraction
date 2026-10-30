@@ -293,6 +293,16 @@ class MapRatingsTest(unittest.TestCase):
              "hlb_incidence.png", "orchard.png"],
         )
 
+    def test_dates_and_date_labels(self):
+        from field_design_extraction.ratings import date_label, date_stem
+
+        self.assertEqual(date_label("2025-9-1"), "2025-09-01")
+        self.assertEqual(date_label("01/09/2025"), "2025-09-01")
+        self.assertEqual(date_label(pd.Timestamp("2025-09-01 10:00")), "2025-09-01")
+        self.assertEqual(date_label(" Date 1 "), "Date 1")
+        self.assertEqual(date_stem("2025-09-01"), "20250901")
+        self.assertEqual(date_stem("Date 1"), "date_1")
+
     def test_other_classes_are_grouped_with_their_names(self):
         from field_design_extraction.figures import group_other_values
 

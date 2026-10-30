@@ -2,12 +2,10 @@
 
 from pathlib import Path
 
-import pandas as pd
-
 from .export import write_design, write_ratings
 from .layout import build_design, report_design
 from .maps import map_value_columns, read_map_ratings, report_map_ratings
-from .ratings import link_ratings, read_ratings, report_ratings
+from .ratings import date_stem, link_ratings, read_ratings, report_ratings
 
 
 def value_columns(source):
@@ -215,7 +213,7 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
                     ),
                     **options,
                 )
-                stem = f"{source_id}_{pd.Timestamp(date):%Y%m%d}_coverage"
+                stem = f"{source_id}_{date_stem(date)}_coverage"
                 paths.append(save_figure(fig, folder / f"{stem}.png", show=show))
 
         if "maps" in which:
@@ -229,7 +227,7 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
                     ),
                     **style, **options,
                 )
-                stem = f"{source_id}_{pd.Timestamp(date):%Y%m%d}_map"
+                stem = f"{source_id}_{date_stem(date)}_map"
                 paths.append(save_figure(fig, folder / f"{stem}.png", show=show))
 
     print()

@@ -49,9 +49,10 @@ rating_sources = {
         "plot_column": "plot",
         "block_column": "block",
         "value_columns": {"score": "score", "evaluator": "evaluator"},
+        # --- "date": a real date (2025-08-15) or a label, as here
         "assessments": {
-            "first": {"sheet": "20250815", "date": "2025-08-15"},
-            "second": {"sheet": "20250905", "date": "2025-09-05"},
+            "first": {"sheet": "date_1", "date": "Date 1"},
+            "second": {"sheet": "date_2", "date": "Date 2"},
         },
         # --- block label in the ratings → block_id of the layout
         "block_mapping": {"BLOCK A": "BLOCK_A", "BLOCK B": "BLOCK_B", "BLOCK C": "BLOCK_C", "BLOCK D": "BLOCK_D"},
@@ -61,6 +62,7 @@ rating_sources = {
             "title": "Example 1 — disease score per date",
             "legend_title": "Disease score [0-100]",
             "map_title": "Example 1 — disease score, {date}",
+            "coverage_title": "Example 1 — plots assessed, {date}",
             "bins": list(range(0, 101, 10)),
         },
     },

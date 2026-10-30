@@ -5,6 +5,7 @@ import re
 import pandas as pd
 from openpyxl.utils import get_column_letter
 
+from .ratings import date_label
 from .workbook import read_cells
 
 
@@ -86,7 +87,7 @@ def read_map_ratings(source, design):
         for name, fills in flags.items():
             table[name] = table["fill"].isin(fills)
 
-        table["date"] = pd.Timestamp(assessment["date"]).date().isoformat()
+        table["date"] = date_label(assessment["date"])
         table["disease"] = source["disease"]
         table["assessment"] = key
         table["link_status"] = "linked"

@@ -1,14 +1,19 @@
-# field_design_extraction
+# Field trial maps and disease assessments: from spreadsheets to analysis-ready tables
 
-Turns spreadsheet field maps (croquis) and disease rating sheets into two kinds of tables:
+Field experiments are often recorded in spreadsheets drawn for people, not for analysis: a field map
+(croqui) where each cell or merged range is a plot, coloured by block, and disease ratings typed in separate
+sheets, one per date or per trial, or marked directly on copies of the map. This Python package
+(`field_design_extraction`) reads those workbooks as they are and turns them into two kinds of tables:
 
 - **design** — one row per plot: `plot_key`, `block_id`, `block_label`, `plot_number`, `row`, `column`
   (`row`/`column` are the plot's cell on the map);
-- **ratings** — one file per date, only the rated plots: `plot_key`, `block_id`, `plot_number`, `date`,
-  `disease` and the value columns you choose (e.g. `score`).
+- **ratings** — one file per assessment date, only the rated plots: `plot_key`, `block_id`, `plot_number`,
+  `date`, `disease` and the value columns you choose (e.g. `score`).
 
 The two join on `plot_key` (`block:plot_number:row:column`; the position keeps it unique when a plot number
-occurs twice).
+occurs twice). Along the way it checks the data (plots claimed by two blocks, ratings that match no plot or
+more than one, plots rated twice) and can draw the field layout, the plots assessed and the ratings of each
+date, and the distribution of scores over time.
 
 ## Install
 
@@ -51,17 +56,29 @@ python examples/example_1_merged_plots.py          # writes examples/output/exam
 python examples/example_2_one_sheet_per_trial.py   # writes examples/output/example_2/
 ```
 
-Example 1 — design, and the scores of the second date (grey: not rated on that date):
+### Example 1
 
-<img src="docs/images/example_1_design.png" width="49%"> <img src="docs/images/example_1_score_20250905_map.png" width="49%">
+Experimental design — four blocks of plots:
 
-Example 1 — plots assessed on the first date, and the score classes per date:
+<p align="center"><img src="docs/images/example_1_design.png" width="60%"></p>
 
-<img src="docs/images/example_1_score_20250815_coverage.png" width="49%"> <img src="docs/images/example_1_score_distribution.png" width="49%">
+Plots assessed on each date (black):
 
-Example 2 — severity of every plot:
+<img src="docs/images/example_1_coverage_date_1.png" width="49%"> <img src="docs/images/example_1_coverage_date_2.png" width="49%">
 
-<img src="docs/images/example_2_severity_20250910_map.png" width="98%">
+Disease score of each plot on each date (grey: not assessed on that date):
+
+<img src="docs/images/example_1_map_date_1.png" width="49%"> <img src="docs/images/example_1_map_date_2.png" width="49%">
+
+Share of the assessed plots in each score class, per date (numbers inside the bars: plots):
+
+<p align="center"><img src="docs/images/example_1_distribution.png" width="75%"></p>
+
+### Example 2
+
+Disease severity of every plot, one trial per colour group of the field map:
+
+<img src="docs/images/example_2_map.png" width="98%">
 
 ## Settings
 
@@ -84,7 +101,7 @@ saved.
 |---|---|
 | `layout_id` | the layout the ratings belong to |
 | `disease`, `workbook` | |
-| `assessments` | `{name: {sheet, date}}`; add `block` when each sheet holds one block |
+| `assessments` | `{name: {sheet, date}}`; add `block` when each sheet holds one block. `date`: a date (`2025-09-01`, `01/09/2025`) or a label such as `"Date 1"` (file names then use `date_1`) |
 | `header_row` | Excel row with the column names (default 1) |
 | `plot_column` | column with the plot number |
 | `block_column` | column with the block label; `None` when each sheet holds one block |
@@ -156,3 +173,7 @@ each block marked.
 ```
 python -m unittest discover -s tests -t tests
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).

@@ -2,9 +2,7 @@
 
 from pathlib import Path
 
-import pandas as pd
-
-from .ratings import RATING_COLUMNS
+from .ratings import RATING_COLUMNS, date_stem
 
 # --- utf-8 with BOM, so Excel shows accented labels correctly
 ENCODING = "utf-8-sig"
@@ -33,7 +31,7 @@ def write_ratings(linked, folder, source_id, value_columns):
     paths = []
 
     for date, group in linked.groupby("date"):
-        stem = f"{source_id}_{pd.Timestamp(date):%Y%m%d}"
+        stem = f"{source_id}_{date_stem(date)}"
 
         ok = group[group["link_status"] == "linked"]
         path = folder / f"{stem}.csv"

@@ -550,7 +550,12 @@ def plot_incidence(
     if exclude:
         data = data[~data["status"].isin(exclude)]
 
-    data = data.assign(has_status=data["status"] == status, date=pd.to_datetime(data["date"]))
+    # --- real dates on a time axis; labels such as "Date 1" in their sorted order
+    dates = pd.to_datetime(data["date"], format="%Y-%m-%d", errors="coerce")
+    data = data.assign(
+        has_status=data["status"] == status,
+        date=dates if dates.notna().all() else data["date"],
+    )
     incidence = data.groupby(["date", group])["has_status"].mean().unstack() * 100
     styles = value_styles(list(incidence.columns), colors)
     names = names or {}
