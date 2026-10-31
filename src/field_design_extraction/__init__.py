@@ -7,6 +7,7 @@ from .maps import classify_cell, read_map_ratings, report_map_ratings
 from .figures import plot_design, plot_distribution, plot_incidence, save_figure
 from .pipeline import FIGURE_TYPES, build_designs, build_ratings, export, run, save_figures
 from .ratings import link_ratings, read_ratings, report_ratings
+from .sheet_values import read_sheet_values
 from .sheets import plot_sheet
 from .workbook import read_cells
 
@@ -32,6 +33,7 @@ __all__ = [
     "read_cells",
     "read_map_ratings",
     "read_ratings",
+    "read_sheet_values",
     "report_design",
     "report_map_ratings",
     "report_ratings",

@@ -26,6 +26,10 @@ def make_workbook(path):
         ws[f"{column}3"], ws[f"{column}4"] = values
     ws["E3"], ws["F3"], ws["E4"], ws["F4"] = 1, 2, 3, 3
     ws["G3"] = "=1+1"   # formula with no saved value (file not saved by Excel)
+    ws["H1"], ws["J1"] = "Site:", "Farm X"          # label, empty cell, value
+    ws["H2"], ws["H3"] = "Planting date", "2025-05-21"   # value below its label
+    ws["K2"], ws["L2"] = "Gate 3", "Entrance"            # value left of its label
+    ws["K4"], ws["K5"] = "North", "Orientation"          # value above its label
 
     # --- one sheet per trial, header on row 3, MIN row below the table
     ws = wb.create_sheet("A")
@@ -102,6 +106,31 @@ class PipelineTest(unittest.TestCase):
         self.assertEqual(design["block_id"].value_counts().to_dict(), {"A": 6, "B": 4})
         self.assertEqual(design.loc[0, "plot_key"], "A:1:3:2")
         self.assertEqual(design.loc[0, "block_label"], "Trial A")
+
+    def test_sheet_values_become_columns(self):
+        self.layout["sheet_values"] = {
+            "site": "Site",                                              # label, value to the right
+            "planting_date": {"label": "planting date", "direction": "below"},
+            "trial": "B2",                                               # cell address
+            "entrance": {"label": "Entrance", "direction": "left"},
+            "orientation": {"label": "Orientation", "direction": "above"},
+        }
+        design = fde.build_design("2025_design", self.layout)
+
+        self.assertEqual(design["entrance"].unique().tolist(), ["Gate 3"])
+        self.assertEqual(design["orientation"].unique().tolist(), ["North"])
+
+        self.assertEqual(design["site"].unique().tolist(), ["Farm X"])
+        self.assertEqual(design["planting_date"].unique().tolist(), ["2025-05-21"])
+        self.assertEqual(design["trial"].unique().tolist(), ["Trial A"])
+
+        # --- per ratings sheet: the value next to "Data:" on sheet A
+        self.per_sheet["sheet_values"] = {"sheet_date": "Data:", "missing": "No such label"}
+        ratings, out = self.quiet(fde.read_ratings, self.per_sheet)
+
+        self.assertEqual(ratings["sheet_date"].unique().tolist(), ["2025-09-10"])
+        self.assertTrue(ratings["missing"].isna().all())
+        self.assertIn("not found", out)
 
     def test_formula_cell_is_not_read_as_text(self):
         cells, out = self.quiet(fde.read_cells, self.workbook, "map", "G3")

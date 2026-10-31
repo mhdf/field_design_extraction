@@ -5,7 +5,8 @@ import re
 import pandas as pd
 from openpyxl.utils import get_column_letter
 
-from .ratings import date_label
+from .ratings import date_label, sheet_value_fields, sheet_value_names
+from .sheet_values import read_sheet_values
 from .workbook import read_cells
 
 
@@ -92,6 +93,12 @@ def read_map_ratings(source, design):
         table["assessment"] = key
         table["link_status"] = "linked"
 
+        # --- values written on the sheet outside the map (e.g. assessor, notes)
+        for name, value in read_sheet_values(
+            source["workbook"], assessment["sheet"], sheet_value_fields(source, assessment),
+        ).items():
+            table[name] = value
+
         tables.append(table.drop(columns=["row", "column"]))
 
     return pd.concat(tables, ignore_index=True)
@@ -99,7 +106,7 @@ def read_map_ratings(source, design):
 
 def map_value_columns(source):
     """Columns written after RATING_COLUMNS for a map source."""
-    return ["status", *source.get("flags", {}), "value", "fill"]
+    return ["status", *source.get("flags", {}), "value", "fill", *sheet_value_names(source)]
 
 
 def report_map_ratings(source_id, ratings, source):

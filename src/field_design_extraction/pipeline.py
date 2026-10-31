@@ -5,7 +5,7 @@ from pathlib import Path
 from .export import write_design, write_ratings
 from .layout import build_design, report_design
 from .maps import map_value_columns, read_map_ratings, report_map_ratings
-from .ratings import date_stem, link_ratings, read_ratings, report_ratings
+from .ratings import date_stem, link_ratings, read_ratings, report_ratings, sheet_value_names
 
 
 def value_columns(source):
@@ -13,7 +13,7 @@ def value_columns(source):
     if source.get("kind") == "map":
         return map_value_columns(source)
 
-    return list(source.get("value_columns", {}).values())
+    return list(source.get("value_columns", {}).values()) + sheet_value_names(source)
 
 
 def build_designs(layouts, verbose=True):
@@ -185,7 +185,8 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
                 xlabel=settings.get("xlabel", "Frequency of plots [%]"),
                 segment_labels=settings.get("segment_labels", "count"),
                 width=settings.get("width", figure_width(design, **options)),
-                legend_height=options.get("legend_height"),
+                legend_height=settings.get("legend_height", options.get("legend_height")),
+                font_size=settings.get("font_size", 10),
                 **style,
             )
             paths.append(save_figure(fig, folder / f"{source_id}_distribution.png", show=show))

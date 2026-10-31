@@ -4,6 +4,7 @@ import re
 
 import pandas as pd
 
+from .sheet_values import read_sheet_values
 from .workbook import range_cells, range_inside, read_cells
 
 
@@ -157,7 +158,15 @@ def build_design(layout_id, layout, cells=None):
         for key in zip(units["block_id"], units["plot_number"], units["row"], units["column"])
     ]
 
-    return units[DESIGN_COLUMNS + attribute_columns].reset_index(drop=True)
+    # --- values written on the map sheet outside the plots (site, cultivar, planting date...)
+    sheet_values = read_sheet_values(layout["workbook"], layout["sheet"], layout.get("sheet_values"))
+
+    for name, value in sheet_values.items():
+        if name in DESIGN_COLUMNS or name in attribute_columns:
+            raise ValueError(f"{layout_id}: sheet_values name {name!r} is already a design column")
+        units[name] = value
+
+    return units[DESIGN_COLUMNS + attribute_columns + list(sheet_values)].reset_index(drop=True)
 
 
 def report_design(layout_id, design):

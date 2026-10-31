@@ -27,12 +27,22 @@ FIGURES = HERE / "output" / "example_2" / "figures"
 
 # --- pictures of the sheets as they look in Excel
 fde.save_figure(
-    fde.plot_sheet(WORKBOOK, "field_map", "A1:AA11", title="Input workbook — sheet field_map"),
+    fde.plot_sheet(WORKBOOK, "field_map", "A1:Z11", title="Input workbook — sheet field_map"),
     FIGURES / "input_field_map.png", dpi=150,
 )
 fde.save_figure(
-    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C14", title="Input workbook — sheet Trial_1 (first rows)"),
+    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C24", title="Input workbook — sheet Trial_1 (first rows)"),
     FIGURES / "input_ratings_trial_1.png", dpi=150,
+)
+
+# --- close-ups of the notes written next to their labels (see sheet_values below)
+fde.save_figure(
+    fde.plot_sheet(WORKBOOK, "field_map", "A1:L2", title="Notes on the field map"),
+    FIGURES / "input_notes_field_map.png", dpi=150,
+)
+fde.save_figure(
+    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C3", title="Notes above a ratings table"),
+    FIGURES / "input_notes_ratings.png", dpi=150,
 )
 
 
@@ -54,6 +64,13 @@ layouts = {
         # --- one plot number per (unmerged) cell
         "unit_rules": {"value_types": ["numeric"], "merged": False},
 
+        # --- notes on row 2 of the map, each typed to the right of its label:
+        #     they become columns of the design table
+        "sheet_values": {
+            "site": "Site:",
+            "cultivar": "Cultivar:",
+        },
+
         "blocks": [
             {"block_id": trial, "label": trial.replace("_", " ").title(), "regions": [region]}
             for trial, region in trials.items()
@@ -63,7 +80,8 @@ layouts = {
             "title": "Example 2 — experimental design",
             "names": {trial: trial.replace("_", " ").title() for trial in trials},
             "legend_title": "Trials",
-            "plot_size": (1.3, 1.8),
+            # --- tall plots; sizes chosen so the figures match Example 1 in size
+            "plot_size": (28.35 / 25, 18.0 / 8),
             "label_rotation": 90,
         },
     },
@@ -75,11 +93,17 @@ rating_sources = {
         "disease": "leaf_blotch",
         "workbook": WORKBOOK,
 
-        # --- rows 1-3 hold notes (date, growth stage, assessed area);
-        #     the column names are on row 7
+        # --- the column names are on row 7; of the table, keep Plot and Severity (%)
         "header_row": 7,
         "plot_column": "Plot",
         "value_columns": {"Severity (%)": "severity"},
+
+        # --- notes above the table (rows 1-3), label in column A, value to its right:
+        #     read on every trial sheet, they become columns of the ratings
+        "sheet_values": {
+            "growth_stage": "Growth stage:",
+            "assessed_area": "Assessed area:",
+        },
 
         # --- no block column: each sheet holds one trial, named in "block"
         "block_column": None,
@@ -94,6 +118,9 @@ rating_sources = {
             "legend_title": "Severity [%]",
             "map_title": "Example 2 — disease severity, {date}",
             "bins": list(range(0, 101, 10)),
+            # --- distribution chart: narrower, with larger text
+            "width": 7.5,
+            "font_size": 12,
         },
     },
 }
