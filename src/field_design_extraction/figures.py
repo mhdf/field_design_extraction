@@ -505,9 +505,11 @@ def plot_distribution(
     groups = list(percent.index)
 
     with _style(font_size):
-        # --- fixed bands (grow with the text): title, bars, x axis, legend; date labels on the left
+        # --- bands (grow with the text): title, bars, x axis, legend; date labels on the left.
+        #     Drawn once with estimates, then the label width and legend height are measured.
         k = font_size / FONT_SIZE
-        if legend_height is None:
+        fixed_legend = legend_height is not None
+        if not fixed_legend:
             rows = -(-len(styles) // _legend_columns(len(styles)))
             legend_height = (0.3 * (rows + 1) + 0.3) * k
         title_band = TITLE_BAND * k
@@ -552,15 +554,16 @@ def plot_distribution(
         for spine in ax.spines.values():
             spine.set_color("#333333")
             spine.set_linewidth(1.2)
+        title_text = None
         if title:
-            fig.text(0.5, 1 - title_band / 2 / fig_h, title, ha="center", va="center",
-                     fontsize=font_size + 2)
+            title_text = fig.text(0.5, 1 - title_band / 2 / fig_h, title, ha="center", va="center",
+                                  fontsize=font_size + 2)
 
         handles = [
             Patch(facecolor=fill, edgecolor=edge, hatch=hatch, label=names.get(v, _format(v)))
             for v, (fill, edge, hatch) in styles.items()
         ]
-        fig.legend(
+        legend = fig.legend(
             handles=handles,
             title=legend_title or value,
             loc="upper center",
@@ -570,6 +573,30 @@ def plot_distribution(
             fancybox=False,
             edgecolor="#555555",
         )
+
+        # --- measured bands: date labels on the left, x axis below the bars, legend at the bottom
+        fig.canvas.draw()
+        renderer = fig.canvas.get_renderer()
+        axes_box = ax.get_window_extent(renderer)
+        label_left = min(t.get_window_extent(renderer).x0 for t in ax.get_yticklabels())
+        left_band = (axes_box.x0 - label_left) / fig.dpi + 0.15
+        axis_band = (axes_box.y0 - ax.xaxis.label.get_window_extent(renderer).y0) / fig.dpi + 0.15 * k
+        legend_pad = legend.borderaxespad * legend.prop.get_size_in_points() / 72
+        if not fixed_legend:
+            legend_height = legend.get_window_extent(renderer).height / fig.dpi + legend_pad + 0.18
+        fig_h = title_band + bars_h + axis_band + legend_height
+
+        fig.set_size_inches(width, fig_h)
+        ax.set_position([
+            left_band / width, (legend_height + axis_band) / fig_h,
+            (width - left_band - right_band) / width, bars_h / fig_h,
+        ])
+        legend.set_bbox_to_anchor(
+            (0.5, (legend_height - (0.05 * k if fixed_legend else 0)) / fig_h),
+            transform=fig.transFigure,
+        )
+        if title_text is not None:
+            title_text.set_position((0.5, 1 - title_band / 2 / fig_h))
         fig.fixed_size = True
 
     return fig

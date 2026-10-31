@@ -149,7 +149,7 @@ def example_2():
     for column in range(1, column0):
         ws.column_dimensions[get_column_letter(column)].width = 5
     for row in range(first_row, first_row + n_rows):
-        ws.row_dimensions[row].height = 39.375
+        ws.row_dimensions[row].height = 37.5
 
     # --- ratings: metadata rows, header on row 7, MIN/MAX rows below the table
     for name, plots in trial_plots.items():

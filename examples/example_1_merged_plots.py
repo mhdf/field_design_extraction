@@ -98,7 +98,7 @@ rating_sources = {
             "coverage_title": "Example 1 — plots assessed, {date}",
             "bins": list(range(0, 101, 10)),
             # --- distribution chart: narrower, with larger text
-            "width": 7.5,
+            "width": 8.5,
             "font_size": 12,
         },
     },
