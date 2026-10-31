@@ -54,6 +54,13 @@ layouts = {
         # --- one plot number per (unmerged) cell
         "unit_rules": {"value_types": ["numeric"], "merged": False},
 
+        # --- notes on row 2 of the map, each typed to the right of its label:
+        #     they become columns of the design table
+        "sheet_values": {
+            "site": "Site:",
+            "cultivar": "Cultivar:",
+        },
+
         "blocks": [
             {"block_id": trial, "label": trial.replace("_", " ").title(), "regions": [region]}
             for trial, region in trials.items()
@@ -75,11 +82,17 @@ rating_sources = {
         "disease": "leaf_blotch",
         "workbook": WORKBOOK,
 
-        # --- rows 1-3 hold notes (date, growth stage, assessed area);
-        #     the column names are on row 7
+        # --- the column names are on row 7; of the table, keep Plot and Severity (%)
         "header_row": 7,
         "plot_column": "Plot",
         "value_columns": {"Severity (%)": "severity"},
+
+        # --- notes above the table (rows 1-3), label in column A, value to its right:
+        #     read on every trial sheet, they become columns of the ratings
+        "sheet_values": {
+            "growth_stage": "Growth stage:",
+            "assessed_area": "Assessed area:",
+        },
 
         # --- no block column: each sheet holds one trial, named in "block"
         "block_column": None,

@@ -160,8 +160,9 @@ Share of the assessed plots in each score class, per date (numbers inside the ba
 ### Example 2 — one cell per plot, one ratings sheet per trial
 
 **1. The input workbook.** Sheet `field_map` holds four trials side by side, plots numbered from 1 in each
-trial. Each trial has its own ratings sheet (`Trial_1` … `Trial_4`), with notes on the first rows, the column
-names on row 7, and MIN/MAX formulas below the table.
+trial, with two notes on row 2 (site, cultivar). Each trial has its own ratings sheet (`Trial_1` … `Trial_4`),
+with notes on the first rows (date, growth stage, assessed area), the column names on row 7, and MIN/MAX
+formulas below the table.
 
 <img src="docs/images/example_2_input_field_map.png" width="72%"> <img src="docs/images/example_2_input_ratings.png" width="22%">
 
@@ -176,13 +177,20 @@ names on row 7, and MIN/MAX formulas below the table.
 | notes on rows 1–3, column names on row 7 | `"header_row": 7` |
 | columns `Plot` and `Severity (%)` | `"plot_column": "Plot"`, `"value_columns": {"Severity (%)": "severity"}` |
 | MIN/MAX rows below the table (no plot number) | nothing to set: rows without a plot number are dropped |
+| notes on the map: "Site: Example farm", "Cultivar: Cultivar X" | layout `"sheet_values": {"site": "Site:", "cultivar": "Cultivar:"}` |
+| notes above each ratings table: "Growth stage: 71", "Assessed area: Plot" | ratings `"sheet_values": {"growth_stage": "Growth stage:", "assessed_area": "Assessed area:"}` |
 
-**3. The result** — ratings table (first rows) and figures:
+**3. The result** — design and ratings tables (first rows) and figures; the notes became columns:
 
-| plot_key | block_id | plot_number | date | disease | severity |
-|---|---|---|---|---|---|
-| TRIAL_1:1:11:2 | TRIAL_1 | 1 | Date 1 | leaf_blotch | 69 |
-| TRIAL_1:2:11:3 | TRIAL_1 | 2 | Date 1 | leaf_blotch | 53 |
+| plot_key | block_id | block_label | plot_number | row | column | site | cultivar |
+|---|---|---|---|---|---|---|---|
+| TRIAL_1:40:4:2 | TRIAL_1 | Trial 1 | 40 | 4 | 2 | Example farm | Cultivar X |
+| TRIAL_1:39:4:3 | TRIAL_1 | Trial 1 | 39 | 4 | 3 | Example farm | Cultivar X |
+
+| plot_key | block_id | plot_number | date | disease | severity | growth_stage | assessed_area |
+|---|---|---|---|---|---|---|---|
+| TRIAL_1:1:11:2 | TRIAL_1 | 1 | Date 1 | leaf_blotch | 69 | 71 | Plot |
+| TRIAL_1:2:11:3 | TRIAL_1 | 2 | Date 1 | leaf_blotch | 53 | 71 | Plot |
 
 Experimental design:
 
@@ -207,9 +215,10 @@ Share of the plots in each severity class (numbers inside the bar: plots):
 | `output_folder` | where the CSV files go (e.g. `dados/avaliacao_visual/consolidated`) |
 | `blocks` | list of `{block_id, label, regions}`; `regions` are the Excel ranges of the block's plots |
 | `unit_rules` | which cells count as plots (optional, also per block): `value_types`, `merged` (True/False/None), `anchor` (True: top-left cell of a merged range) |
+| `sheet_values` | notes written on the map sheet outside the plots (site, cultivar, planting date…), each becoming a column of the design table — see [Notes outside the tables](#notes-outside-the-tables-sheet_values) |
 
 A cell inside two blocks stops the run with the list of cells. Formula cells are read through the value Excel
-saved.
+saved. Block `attributes` (e.g. `{"treatment": "A"}`) also become design columns.
 
 ### rating_sources — one entry per ratings workbook
 
@@ -223,9 +232,35 @@ saved.
 | `block_column` | column with the block label; `None` when each sheet holds one block |
 | `block_mapping` | block label in the ratings → `block_id` (optional when they are equal) |
 | `value_columns` | columns to keep: `{name in the sheet: name in the output}` |
+| `sheet_values` | notes written on each ratings sheet outside the table (growth stage, application date…), each becoming a column of the ratings; also per assessment |
 
-Rows without a plot number (e.g. MIN/MAX rows) are dropped. Ratings that cannot be linked go to
-`<source>_<date>_unlinked.csv` with the reason (`link_status`).
+Only the columns named here are kept: the plot and block columns, and the `value_columns` (in that order, under
+their output names); any other column of the sheet is left out — to keep it, add it to `value_columns`. A
+named column missing from a sheet stops the run with the list of columns found. The lines above `header_row`
+are not part of the table; to keep a note written there, use `sheet_values`. Rows without a plot number (e.g.
+MIN/MAX rows) are dropped; columns holding only whole numbers stay whole (69, not 69.0). Ratings that cannot
+be linked go to `<source>_<date>_unlinked.csv` with the reason (`link_status`) and the kept columns.
+
+### Notes outside the tables (`sheet_values`)
+
+Single values written on a sheet next to a label — on a field map ("Site: Castro", "Cultivar: Imperatriz",
+"Planting date: 2025-05-21") or above a ratings table ("Growth stage: 71") — become columns, with the same
+value on every row of that sheet. Each entry is `name in the output: where to find the value`:
+
+| where to find it | meaning |
+|---|---|
+| `"Growth stage:"` | the cell holding this label (any case, colon optional); the value is the first filled cell to its right |
+| `{"label": "Growth stage:", "direction": "below"}` | the same, with the value in the first filled cell below the label |
+| `"B2"` | the value of that cell |
+| `{..., "sheet": "notes"}` | look on another sheet of the workbook |
+
+```python
+"sheet_values": {"site": "Site:", "cultivar": "Cultivar:", "planting_date": {"label": "Planting date", "direction": "below"}}
+```
+
+In a ratings source, `sheet_values` is read on every assessment sheet; an assessment can add its own or
+replace one (`"assessments": {"first": {"sheet": ..., "sheet_values": {...}}}`). Formula cells give the value
+Excel saved; dates become `YYYY-MM-DD`. A label that is not found gives an empty value and a warning.
 
 ### Ratings marked on the map (`"kind": "map"`)
 
@@ -242,7 +277,8 @@ orchard where every cell is a tree). The design then takes every cell as a plot:
 | `ignore_text` | text read as empty (e.g. plot labels written in tree cells) |
 | `flags` | extra True/False columns from the fill, e.g. `{"new_case": ["FFFFFF00"]}` |
 
-Output: one file per date with every plot: `status`, the flags, and the raw cell `value` and `fill`.
+Output: one file per date with every plot: `status`, the flags, and the raw cell `value` and `fill` (and
+`sheet_values`, if any).
 
 ### Figures (optional)
 

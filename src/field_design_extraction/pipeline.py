@@ -5,7 +5,7 @@ from pathlib import Path
 from .export import write_design, write_ratings
 from .layout import build_design, report_design
 from .maps import map_value_columns, read_map_ratings, report_map_ratings
-from .ratings import date_stem, link_ratings, read_ratings, report_ratings
+from .ratings import date_stem, link_ratings, read_ratings, report_ratings, sheet_value_names
 
 
 def value_columns(source):
@@ -13,7 +13,7 @@ def value_columns(source):
     if source.get("kind") == "map":
         return map_value_columns(source)
 
-    return list(source.get("value_columns", {}).values())
+    return list(source.get("value_columns", {}).values()) + sheet_value_names(source)
 
 
 def build_designs(layouts, verbose=True):

@@ -6,6 +6,7 @@ import re
 import pandas as pd
 
 from .layout import normalize_plot_number
+from .sheet_values import read_sheet_values
 
 
 RATING_COLUMNS = ["plot_key", "block_id", "plot_number", "date", "disease"]
@@ -42,6 +43,19 @@ def date_stem(date):
         return str(date).replace("-", "")
 
     return re.sub(r"[^0-9a-z]+", "_", str(date).lower()).strip("_")
+
+
+def sheet_value_fields(source, assessment):
+    """sheet_values of a source, with those of one assessment added or replacing them."""
+    return {**source.get("sheet_values", {}), **assessment.get("sheet_values", {})}
+
+
+def sheet_value_names(source):
+    """Names of all sheet_values of a source (source level first, then per assessment)."""
+    names = list(source.get("sheet_values", {}))
+    for assessment in source["assessments"].values():
+        names += [name for name in assessment.get("sheet_values", {}) if name not in names]
+    return names
 
 
 def _whole_numbers(values):
@@ -130,6 +144,12 @@ def read_ratings(source):
 
         for source_name, output_name in value_columns.items():
             table[output_name] = _whole_numbers(df[source_name])
+
+        # --- values written on the sheet outside the table (growth stage, application date...)
+        for name, value in read_sheet_values(
+            source["workbook"], assessment["sheet"], sheet_value_fields(source, assessment),
+        ).items():
+            table[name] = value
 
         tables.append(table)
 

@@ -122,6 +122,8 @@ def example_2():
     ws.title = "field_map"
     ws["B1"] = "Example field — 4 trials, plots numbered from 1 within each trial"
     ws["B1"].font = Font(bold=True)
+    ws["B2"], ws["D2"] = "Site:", "Example farm"            # notes typed next to their labels
+    ws["H2"], ws["J2"] = "Cultivar:", "Cultivar X"
 
     total_columns = sum(t[1] for t in trials)
     field = smooth_field((n_rows, total_columns), sigma=1.6)
