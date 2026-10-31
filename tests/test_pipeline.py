@@ -28,6 +28,8 @@ def make_workbook(path):
     ws["G3"] = "=1+1"   # formula with no saved value (file not saved by Excel)
     ws["H1"], ws["J1"] = "Site:", "Farm X"          # label, empty cell, value
     ws["H2"], ws["H3"] = "Planting date", "2025-05-21"   # value below its label
+    ws["K2"], ws["L2"] = "Gate 3", "Entrance"            # value left of its label
+    ws["K4"], ws["K5"] = "North", "Orientation"          # value above its label
 
     # --- one sheet per trial, header on row 3, MIN row below the table
     ws = wb.create_sheet("A")
@@ -110,8 +112,13 @@ class PipelineTest(unittest.TestCase):
             "site": "Site",                                              # label, value to the right
             "planting_date": {"label": "planting date", "direction": "below"},
             "trial": "B2",                                               # cell address
+            "entrance": {"label": "Entrance", "direction": "left"},
+            "orientation": {"label": "Orientation", "direction": "above"},
         }
         design = fde.build_design("2025_design", self.layout)
+
+        self.assertEqual(design["entrance"].unique().tolist(), ["Gate 3"])
+        self.assertEqual(design["orientation"].unique().tolist(), ["North"])
 
         self.assertEqual(design["site"].unique().tolist(), ["Farm X"])
         self.assertEqual(design["planting_date"].unique().tolist(), ["2025-05-21"])

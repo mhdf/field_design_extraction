@@ -27,12 +27,22 @@ FIGURES = HERE / "output" / "example_2" / "figures"
 
 # --- pictures of the sheets as they look in Excel
 fde.save_figure(
-    fde.plot_sheet(WORKBOOK, "field_map", "A1:AA11", title="Input workbook — sheet field_map"),
+    fde.plot_sheet(WORKBOOK, "field_map", "A1:Z11", title="Input workbook — sheet field_map"),
     FIGURES / "input_field_map.png", dpi=150,
 )
 fde.save_figure(
-    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C14", title="Input workbook — sheet Trial_1 (first rows)"),
+    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C24", title="Input workbook — sheet Trial_1 (first rows)"),
     FIGURES / "input_ratings_trial_1.png", dpi=150,
+)
+
+# --- close-ups of the notes written next to their labels (see sheet_values below)
+fde.save_figure(
+    fde.plot_sheet(WORKBOOK, "field_map", "A1:L2", title="Notes on the field map"),
+    FIGURES / "input_notes_field_map.png", dpi=150,
+)
+fde.save_figure(
+    fde.plot_sheet(WORKBOOK, "Trial_1", "A1:C3", title="Notes above a ratings table"),
+    FIGURES / "input_notes_ratings.png", dpi=150,
 )
 
 
@@ -70,7 +80,8 @@ layouts = {
             "title": "Example 2 — experimental design",
             "names": {trial: trial.replace("_", " ").title() for trial in trials},
             "legend_title": "Trials",
-            "plot_size": (1.3, 1.8),
+            # --- tall plots; sizes chosen so the figures match Example 1 in size
+            "plot_size": (28.35 / 25, 18.0 / 8),
             "label_rotation": 90,
         },
     },
@@ -107,6 +118,9 @@ rating_sources = {
             "legend_title": "Severity [%]",
             "map_title": "Example 2 — disease severity, {date}",
             "bins": list(range(0, 101, 10)),
+            # --- distribution chart: narrower, with larger text
+            "width": 7.5,
+            "font_size": 12,
         },
     },
 }

@@ -26,15 +26,15 @@ SCORE_FILLS = ["#C7D9EA", "#B5D5C3", "#E5D8A8", "#E6B69E", "#D89B9B"]
 SCORE_EDGES = ["#718FAE", "#6E9A7C", "#9E8F5D", "#A76F5B", "#975D5D"]
 
 
-def _style():
+def _style(font_size=FONT_SIZE):
     import matplotlib.pyplot as plt
 
     return plt.rc_context({
         "font.family": FONT_FAMILY,
-        "font.size": FONT_SIZE,
-        "axes.titlesize": FONT_SIZE + 2,
-        "legend.fontsize": FONT_SIZE,
-        "legend.title_fontsize": FONT_SIZE,
+        "font.size": font_size,
+        "axes.titlesize": font_size + 2,
+        "legend.fontsize": font_size,
+        "legend.title_fontsize": font_size,
     })
 
 
@@ -473,14 +473,15 @@ def plot_distribution(
     segment_labels="count",
     width=9.0,
     legend_height=None,
+    font_size=FONT_SIZE,
 ):
     """Horizontal 100% stacked bars: share of plots in each class (score or status), one bar per date.
 
     bins:           class edges for numbers with many values (see score_classes).
     segment_labels: text inside each segment: "count" (number of plots), "percent" or None.
     width:          figure width in inches (e.g. figure_width(design), to match the maps).
+    font_size:      text size in points; a narrow figure with larger text reads better when shown small.
     """
-    legend_height = LEGEND_BAND if legend_height is None else legend_height
     if segment_labels not in ("count", "percent", None):
         raise ValueError("segment_labels must be 'count', 'percent' or None")
 
@@ -503,15 +504,20 @@ def plot_distribution(
     percent = counts.div(counts.sum(axis=1), axis=0) * 100
     groups = list(percent.index)
 
-    with _style():
-        # --- fixed bands: title, bars, x axis, legend; date labels on the left
-        bars_h = 0.6 * len(groups) + 0.3
-        axis_band, left, right = 0.75, 1.6, 0.35
-        fig_h = TITLE_BAND + bars_h + axis_band + legend_height
+    with _style(font_size):
+        # --- fixed bands (grow with the text): title, bars, x axis, legend; date labels on the left
+        k = font_size / FONT_SIZE
+        if legend_height is None:
+            rows = -(-len(styles) // _legend_columns(len(styles)))
+            legend_height = (0.3 * (rows + 1) + 0.3) * k
+        title_band = TITLE_BAND * k
+        bars_h = (0.6 * len(groups) + 0.3) * k
+        axis_band, left_band, right_band = 0.62 * k, 1.6 * k, 0.35
+        fig_h = title_band + bars_h + axis_band + legend_height
         fig = plt.figure(figsize=(width, fig_h))
         ax = fig.add_axes([
-            left / width, (legend_height + axis_band) / fig_h,
-            (width - left - right) / width, bars_h / fig_h,
+            left_band / width, (legend_height + axis_band) / fig_h,
+            (width - left_band - right_band) / width, bars_h / fig_h,
         ])
         y_positions = np.arange(len(groups))[::-1] * 0.6
 
@@ -529,7 +535,7 @@ def plot_distribution(
                         else f"{share:.1f}"
                     )
                     ax.text(left + share / 2, y, text, ha="center", va="center",
-                            color="#303030", fontsize=FONT_SIZE - 1)
+                            color="#303030", fontsize=font_size - 1)
                 left += share
 
         ax.set_xlim(0, 100)
@@ -547,8 +553,8 @@ def plot_distribution(
             spine.set_color("#333333")
             spine.set_linewidth(1.2)
         if title:
-            fig.text(0.5, 1 - TITLE_BAND / 2 / fig_h, title, ha="center", va="center",
-                     fontsize=FONT_SIZE + 2)
+            fig.text(0.5, 1 - title_band / 2 / fig_h, title, ha="center", va="center",
+                     fontsize=font_size + 2)
 
         handles = [
             Patch(facecolor=fill, edgecolor=edge, hatch=hatch, label=names.get(v, _format(v)))
@@ -558,7 +564,7 @@ def plot_distribution(
             handles=handles,
             title=legend_title or value,
             loc="upper center",
-            bbox_to_anchor=(0.5, (legend_height - 0.15) / fig_h),
+            bbox_to_anchor=(0.5, (legend_height - 0.05 * k) / fig_h),
             ncol=_legend_columns(len(handles)),
             frameon=True,
             fancybox=False,

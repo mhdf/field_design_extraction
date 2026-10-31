@@ -116,7 +116,7 @@ python examples/example_2_one_sheet_per_trial.py   # writes examples/output/exam
 merged cells. Sheets `date_1` and `date_2` hold the ratings of each assessment date, one row per rated plot;
 on date 2 the plots of date 1 were assessed again, together with new ones.
 
-<img src="docs/images/example_1_input_field_map.png" width="66%"> <img src="docs/images/example_1_input_ratings.png" width="28%">
+<img src="docs/images/example_1_input_field_map.png" width="71.8%"> <img src="docs/images/example_1_input_ratings.png" width="25.2%">
 
 **2. The settings describe that workbook** (`examples/example_1_merged_plots.py`):
 
@@ -155,7 +155,7 @@ Disease score of each plot on each date (grey: not assessed on that date):
 
 Share of the assessed plots in each score class, per date (numbers inside the bars: plots):
 
-<p align="center"><img src="docs/images/example_1_distribution.png" width="75%"></p>
+<img src="docs/images/example_1_distribution.png" width="55%">
 
 ### Example 2 — one cell per plot, one ratings sheet per trial
 
@@ -164,7 +164,7 @@ trial, with two notes on row 2 (site, cultivar). Each trial has its own ratings 
 with notes on the first rows (date, growth stage, assessed area), the column names on row 7, and MIN/MAX
 formulas below the table.
 
-<img src="docs/images/example_2_input_field_map.png" width="72%"> <img src="docs/images/example_2_input_ratings.png" width="22%">
+<img src="docs/images/example_2_input_field_map.png" width="71.4%"> <img src="docs/images/example_2_input_ratings.png" width="25.6%">
 
 **2. The settings describe that workbook** (`examples/example_2_one_sheet_per_trial.py`):
 
@@ -202,7 +202,7 @@ Disease severity of each plot:
 
 Share of the plots in each severity class (numbers inside the bar: plots):
 
-<p align="center"><img src="docs/images/example_2_distribution.png" width="75%"></p>
+<img src="docs/images/example_2_distribution.png" width="55%">
 
 ## Settings
 
@@ -243,20 +243,33 @@ be linked go to `<source>_<date>_unlinked.csv` with the reason (`link_status`) a
 
 ### Notes outside the tables (`sheet_values`)
 
-Single values written on a sheet next to a label — on a field map ("Site: Castro", "Cultivar: Imperatriz",
-"Planting date: 2025-05-21") or above a ratings table ("Growth stage: 71") — become columns, with the same
-value on every row of that sheet. Each entry is `name in the output: where to find the value`:
+Workbooks often carry information that is not part of any table: a note typed next to its label, such as
+"Site: Castro", "Cultivar: Imperatriz" or "Planting date: 2025-05-21" on a field map, or "Growth stage: 71" above
+a ratings table. It holds for everything on that sheet, so each such note can become a column with the same
+value on every row: of the design table (notes on the field map) or of the ratings (notes on a ratings sheet).
+
+For example, in [Example 2](#example-2--one-cell-per-plot-one-ratings-sheet-per-trial) the field map has
+"Site:" in B2 with "Example farm" two cells to its right, and each ratings sheet has "Growth stage:" in A2
+with 71 next to it:
+
+<img src="docs/images/example_2_notes_field_map.png" width="61.6%"> <img src="docs/images/example_2_notes_ratings.png" width="30.4%">
+
+The settings name the new columns and say where each value is:
+
+```python
+layouts = {"example_2_design": {..., "sheet_values": {"site": "Site:", "cultivar": "Cultivar:"}}}
+rating_sources = {"example_2_severity": {..., "sheet_values": {"growth_stage": "Growth stage:"}}}
+```
+
+so every row of the design table gets `site = Example farm` and `cultivar = Cultivar X`, and every rating from
+that sheet gets `growth_stage = 71`. Each entry is `name in the output: where to find the value`:
 
 | where to find it | meaning |
 |---|---|
 | `"Growth stage:"` | the cell holding this label (any case, colon optional); the value is the first filled cell to its right |
-| `{"label": "Growth stage:", "direction": "below"}` | the same, with the value in the first filled cell below the label |
+| `{"label": "Growth stage:", "direction": "below"}` | the same, looking `"below"`, `"left"` or `"above"` the label instead (the first filled cell in that direction) |
 | `"B2"` | the value of that cell |
 | `{..., "sheet": "notes"}` | look on another sheet of the workbook |
-
-```python
-"sheet_values": {"site": "Site:", "cultivar": "Cultivar:", "planting_date": {"label": "Planting date", "direction": "below"}}
-```
 
 In a ratings source, `sheet_values` is read on every assessment sheet; an assessment can add its own or
 replace one (`"assessments": {"first": {"sheet": ..., "sheet_values": {...}}}`). Formula cells give the value

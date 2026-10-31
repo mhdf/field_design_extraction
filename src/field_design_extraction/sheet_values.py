@@ -2,7 +2,7 @@
 
 A field is found either by its cell ("B2") or by the label written next to it:
 {"label": "Growth stage:", "direction": "right"} takes the first filled cell to the
-right of the cell holding that label ("below": the first filled cell under it).
+right of the cell holding that label; "left", "below" and "above" look the other ways.
 """
 
 import datetime as dt
@@ -11,7 +11,7 @@ import re
 from .workbook import get_sheet
 
 CELL = re.compile(r"[A-Za-z]{1,3}[1-9]\d*")
-DIRECTIONS = {"right": (0, 1), "below": (1, 0)}
+DIRECTIONS = {"right": (0, 1), "left": (0, -1), "below": (1, 0), "above": (-1, 0)}
 MAX_STEPS = 50
 
 
@@ -61,7 +61,10 @@ def find_value(path, sheet, spec):
         for cell in row:
             if isinstance(cell.value, str) and _normalize(cell.value) == label:
                 for step in range(1, MAX_STEPS + 1):
-                    value = ws.cell(cell.row + d_row * step, cell.column + d_col * step).value
+                    row, column = cell.row + d_row * step, cell.column + d_col * step
+                    if row < 1 or column < 1:
+                        break
+                    value = ws.cell(row, column).value
                     if value is not None and str(value).strip() != "":
                         return _clean(value)
                 return None

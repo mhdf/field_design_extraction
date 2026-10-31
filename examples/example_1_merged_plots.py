@@ -30,7 +30,7 @@ fde.save_figure(
     FIGURES / "input_field_map.png", dpi=150,
 )
 fde.save_figure(
-    fde.plot_sheet(WORKBOOK, "date_1", "A1:D12", title="Input workbook — sheet date_1 (first rows)"),
+    fde.plot_sheet(WORKBOOK, "date_1", "A1:D24", title="Input workbook — sheet date_1 (first rows)"),
     FIGURES / "input_ratings_date_1.png", dpi=150,
 )
 
@@ -97,6 +97,9 @@ rating_sources = {
             "map_title": "Example 1 — disease score, {date}",
             "coverage_title": "Example 1 — plots assessed, {date}",
             "bins": list(range(0, 101, 10)),
+            # --- distribution chart: narrower, with larger text
+            "width": 7.5,
+            "font_size": 12,
         },
     },
 }

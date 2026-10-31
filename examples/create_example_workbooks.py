@@ -145,6 +145,12 @@ def example_2():
         trial_plots[name] = plots
         column0 += n_cols
 
+    # --- narrow columns and tall rows: each plot cell is drawn as a tall rectangle
+    for column in range(1, column0):
+        ws.column_dimensions[get_column_letter(column)].width = 5
+    for row in range(first_row, first_row + n_rows):
+        ws.row_dimensions[row].height = 39.375
+
     # --- ratings: metadata rows, header on row 7, MIN/MAX rows below the table
     for name, plots in trial_plots.items():
         sheet = wb.create_sheet(name.replace(" ", "_"))

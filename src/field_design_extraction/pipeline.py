@@ -185,7 +185,8 @@ def save_figures(layouts, sources, designs, ratings, which=("design", "distribut
                 xlabel=settings.get("xlabel", "Frequency of plots [%]"),
                 segment_labels=settings.get("segment_labels", "count"),
                 width=settings.get("width", figure_width(design, **options)),
-                legend_height=options.get("legend_height"),
+                legend_height=settings.get("legend_height", options.get("legend_height")),
+                font_size=settings.get("font_size", 10),
                 **style,
             )
             paths.append(save_figure(fig, folder / f"{source_id}_distribution.png", show=show))
