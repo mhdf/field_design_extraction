@@ -27,7 +27,7 @@ FIGURES = HERE / "output" / "example_2" / "figures"
 
 # --- pictures of the sheets as they look in Excel
 fde.save_figure(
-    fde.plot_sheet(WORKBOOK, "field_map", "A1:Z11", title="Input workbook — sheet field_map"),
+    fde.plot_sheet(WORKBOOK, "field_map", "A1:Z12", title="Input workbook — sheet field_map"),
     FIGURES / "input_field_map.png", dpi=150,
 )
 fde.save_figure(
@@ -119,7 +119,7 @@ rating_sources = {
             "map_title": "Example 2 — disease severity, {date}",
             "bins": list(range(0, 101, 10)),
             # --- distribution chart: narrower, with larger text
-            "width": 7.5,
+            "width": 8.5,
             "font_size": 12,
         },
     },

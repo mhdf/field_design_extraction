@@ -155,7 +155,7 @@ Disease score of each plot on each date (grey: not assessed on that date):
 
 Share of the assessed plots in each score class, per date (numbers inside the bars: plots):
 
-<img src="docs/images/example_1_distribution.png" width="55%">
+<img src="docs/images/example_1_distribution.png" width="62%">
 
 ### Example 2 — one cell per plot, one ratings sheet per trial
 
@@ -202,7 +202,7 @@ Disease severity of each plot:
 
 Share of the plots in each severity class (numbers inside the bar: plots):
 
-<img src="docs/images/example_2_distribution.png" width="55%">
+<img src="docs/images/example_2_distribution.png" width="62%">
 
 ## Settings
 
@@ -325,7 +325,8 @@ Make plots wider than tall when rows are farther apart than plots within a row, 
 
 Size: the design, coverage and map figures of a layout all have the same size and plot shapes (the map is
 drawn at a fixed scale, with fixed space for the title and the legend — `legend_height`, in inches); the
-distribution chart takes the same width, so the figures line up side by side.
+distribution chart takes the same width (or the `width` in its source's `"figure"` entry), so the figures
+line up side by side; its height fits the dates and the legend.
 
 Gaps between blocks: `gaps` = (horizontal, vertical) size; `gap_rule` `"any"` (default) puts a gap wherever
 blocks meet (at least 2 neighbouring plots), but the gap crosses the whole figure and may cut other blocks;
